@@ -64,19 +64,28 @@ export interface Post {
   id: string;
   title: string;
   content: string;
-  category: 'info' | 'group-buy' | 'roommate' | 'free';
-  author: User;
+  category: 'tip' | 'recipe' | 'cleaning' | 'shopping' | 'free' | 'question' | 'review';
+  author?: User;
+  userId: string;
+  groupId?: string;
   createdAt: Date;
-  likes: number;
-  comments: Comment[];
+  updatedAt: Date;
+  likes?: number;
+  likedBy?: string[];
+  bookmarkedBy?: string[];
+  comments?: Comment[];
   images?: string[];
+  tags?: string[];
 }
 
 export interface Comment {
   id: string;
   content: string;
-  author: User;
+  author?: User;
+  userId: string;
   createdAt: Date;
+  likes?: number;
+  likedBy?: string[];
   replies?: Comment[];
 }
 

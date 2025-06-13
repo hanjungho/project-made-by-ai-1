@@ -164,6 +164,173 @@ const sampleExpenses: Expense[] = [
   }
 ];
 
+const samplePosts: Post[] = [
+  {
+    id: '1',
+    title: '겨울철 전기 요금 절약 팁 공유해요!',
+    content: `안녕하세요! 이번 겨울 전기요금이 너무 많이 나와서 절약 방법을 찾아보다가 효과적인 방법들을 발견해서 공유드립니다.
+
+1. 보일러 온도를 18-20도로 설정하기
+2. 창문에 뽁뽁이 붙이기 (단열 효과 짱!)
+3. 전자레인지 대신 에어프라이어 사용하기
+4. 전기장판 대신 전기담요 사용하기
+
+특히 뽁뽁이는 정말 효과가 좋더라구요. 작년 대비 20% 정도 절약했어요!`,
+    category: 'tip',
+    userId: 'user1',
+    author: { id: 'user1', name: '김우리', email: 'woori@gmail.com', provider: 'google' },
+    groupId: 'group1',
+    createdAt: new Date(2024, 11, 3),
+    updatedAt: new Date(2024, 11, 3),
+    likes: 12,
+    likedBy: ['user2', 'user3'],
+    bookmarkedBy: ['user2'],
+    tags: ['절약', '전기요금', '겨울팁'],
+    comments: [
+      {
+        id: 'c1',
+        content: '뽁뽁이 팁 정말 좋네요! 당장 해봐야겠어요',
+        userId: 'user2',
+        author: { id: 'user2', name: '박집사', email: 'jipsa@kakao.com', provider: 'kakao' },
+        createdAt: new Date(2024, 11, 3, 14, 30),
+        likes: 3,
+        likedBy: ['user1', 'user3']
+      }
+    ]
+  },
+  {
+    id: '2',
+    title: '간단한 김치볶음밥 레시피',
+    content: `혼자 살면서 자주 해먹는 김치볶음밥 레시피 공유할게요!
+
+재료:
+- 밥 1공기
+- 김치 1/2컵
+- 스팸 1/3캔
+- 달걀 1개
+- 참기름, 깨
+
+만드는 법:
+1. 스팸을 먼저 볶아주세요
+2. 김치 넣고 볶다가 밥 넣고 볶기
+3. 마지막에 달걀 넣고 스크램블
+4. 참기름, 깨 뿌려서 완성!
+
+10분이면 뚝딱 완성되는 든든한 한끼입니다 😋`,
+    category: 'recipe',
+    userId: 'user2',
+    author: { id: 'user2', name: '박집사', email: 'jipsa@kakao.com', provider: 'kakao' },
+    createdAt: new Date(2024, 11, 2),
+    updatedAt: new Date(2024, 11, 2),
+    likes: 8,
+    likedBy: ['user1', 'user3'],
+    bookmarkedBy: ['user1', 'user3'],
+    tags: ['요리', '간단요리', '김치볶음밥'],
+    comments: []
+  },
+  {
+    id: '3',
+    title: '화장실 청소 꿀팁! (곰팡이 제거)',
+    content: `화장실 타일 사이 곰팡이 때문에 고민이셨던 분들 주목!
+
+베이킹소다 + 구연산 + 락스 조합이 정말 효과적이에요.
+
+1. 베이킹소다를 뿌리고 30분 대기
+2. 구연산 희석한 물로 닦아내기  
+3. 마지막에 락스로 마무리
+4. 환기 필수!
+
+일주일에 한 번만 해도 화장실이 완전히 깔끔해져요!`,
+    category: 'cleaning',
+    userId: 'user3',
+    author: { id: 'user3', name: '이하우스', email: 'house@naver.com', provider: 'naver' },
+    groupId: 'group1',
+    createdAt: new Date(2024, 11, 1),
+    updatedAt: new Date(2024, 11, 1),
+    likes: 15,
+    likedBy: ['user1', 'user2'],
+    bookmarkedBy: ['user1', 'user2'],
+    tags: ['청소', '화장실', '곰팡이제거'],
+    comments: [
+      {
+        id: 'c2',
+        content: '와 정말 효과 있나요? 저희 집 화장실도 곰팡이가...',
+        userId: 'user1',
+        author: { id: 'user1', name: '김우리', email: 'woori@gmail.com', provider: 'google' },
+        createdAt: new Date(2024, 11, 1, 16, 15),
+        likes: 1,
+        likedBy: ['user3']
+      },
+      {
+        id: 'c3',
+        content: '네! 정말 깨끗해져요. 환기만 잘 시켜주세요!',
+        userId: 'user3',
+        author: { id: 'user3', name: '이하우스', email: 'house@naver.com', provider: 'naver' },
+        createdAt: new Date(2024, 11, 1, 16, 30),
+        likes: 2,
+        likedBy: ['user1', 'user2']
+      }
+    ]
+  },
+  {
+    id: '4',
+    title: '마트 할인 정보 공유합니다',
+    content: `이번 주 대형마트 할인 정보 정리했어요!
+
+이마트:
+- 삼겹살 1+1 (12/5까지)
+- 생수 2L 6개들이 5,900원
+- 라면 20개들이 15,000원
+
+홈플러스:
+- 닭가슴살 1kg 7,900원
+- 화장지 30롤 12,000원
+
+모두 장보기 전에 확인해보세요!`,
+    category: 'shopping',
+    userId: 'user1',
+    author: { id: 'user1', name: '김우리', email: 'woori@gmail.com', provider: 'google' },
+    createdAt: new Date(2024, 11, 4),
+    updatedAt: new Date(2024, 11, 4),
+    likes: 20,
+    likedBy: ['user2', 'user3'],
+    bookmarkedBy: ['user2', 'user3'],
+    tags: ['할인정보', '마트', '장보기'],
+    comments: []
+  },
+  {
+    id: '5',
+    title: '오늘 하루 어떠셨나요?',
+    content: `금요일이네요! 이번 주 정말 빨리 지나간 것 같아요.
+
+다들 한 주 고생 많으셨고, 주말 푹 쉬세요!
+
+저는 내일 친구들이랑 한강 가려고 하는데 날씨가 좋을지 모르겠네요 ㅋㅋ
+
+다들 주말 계획 있으시면 댓글로 공유해주세요! 🎉`,
+    category: 'free',
+    userId: 'user2',
+    author: { id: 'user2', name: '박집사', email: 'jipsa@kakao.com', provider: 'kakao' },
+    createdAt: new Date(2024, 11, 5),
+    updatedAt: new Date(2024, 11, 5),
+    likes: 5,
+    likedBy: ['user1'],
+    bookmarkedBy: [],
+    tags: ['일상', '주말'],
+    comments: [
+      {
+        id: 'c4',
+        content: '저는 집에서 넷플릭스 정주행 예정이에요 ㅎㅎ',
+        userId: 'user1',
+        author: { id: 'user1', name: '김우리', email: 'woori@gmail.com', provider: 'google' },
+        createdAt: new Date(2024, 11, 5, 10, 20),
+        likes: 1,
+        likedBy: ['user2']
+      }
+    ]
+  }
+];
+
 const sampleGroup: Group = {
   id: 'group1',
   name: '우리집 하우스메이트',
@@ -237,7 +404,7 @@ export const useAppStore = create<AppState>()(
       deleteExpense: (id) =>
         set((state) => ({ expenses: state.expenses.filter((e) => e.id !== id) })),
       
-      posts: [],
+      posts: samplePosts,
       addPost: (post) => set((state) => ({ posts: [...state.posts, post] })),
       updatePost: (id, updates) =>
         set((state) => ({

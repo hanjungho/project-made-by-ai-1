@@ -11,6 +11,7 @@ import ExpensesPage from './components/expenses/ExpensesPage';
 import GamesPage from './components/games/GamesPage';
 import RoulettePage from './components/games/RoulettePage';
 import AIAssistantPage from './components/ai/AIAssistantPage';
+import CommunityPage from './components/community/CommunityPage';
 
 function App() {
   const { isAuthenticated } = useAuthStore();
@@ -95,13 +96,21 @@ function App() {
           }
         />
         <Route
+          path="/ai-assistant"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <AIAssistantPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/community"
           element={
             <ProtectedRoute>
               <Layout>
-                <div className="text-center py-12">
-                  <h2 className="text-2xl font-bold text-gray-800">커뮤니티 (준비중)</h2>
-                </div>
+                <CommunityPage />
               </Layout>
             </ProtectedRoute>
           }
