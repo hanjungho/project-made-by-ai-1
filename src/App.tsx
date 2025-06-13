@@ -1,0 +1,114 @@
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useAuthStore } from './store/authStore';
+import Layout from './components/layout/Layout';
+import ProtectedRoute from './components/common/ProtectedRoute';
+import LoginPage from './components/auth/LoginPage';
+import HomePage from './components/home/HomePage';
+import CalendarPage from './components/calendar/CalendarPage';
+import TasksPage from './components/tasks/TasksPage';
+import ExpensesPage from './components/expenses/ExpensesPage';
+import GamesPage from './components/games/GamesPage';
+import RoulettePage from './components/games/RoulettePage';
+import AIAssistantPage from './components/ai/AIAssistantPage';
+
+function App() {
+  const { isAuthenticated } = useAuthStore();
+
+  console.log('App component rendered, isAuthenticated:', isAuthenticated);
+
+  return (
+    <Router>
+      <Routes>
+        <Route 
+          path="/login" 
+          element={isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />} 
+        />
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <HomePage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/calendar"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <CalendarPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/tasks"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <TasksPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/expenses"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <ExpensesPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/games"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <GamesPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/games/roulette"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <RoulettePage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/ai-assistant"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <AIAssistantPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/community"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <div className="text-center py-12">
+                  <h2 className="text-2xl font-bold text-gray-800">커뮤니티 (준비중)</h2>
+                </div>
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </Router>
+  );
+}
+
+export default App;
