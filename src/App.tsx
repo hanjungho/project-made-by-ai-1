@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
+import { VERSION, BUILD_TIME } from './version';
 import Layout from './components/layout/Layout';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import LoginPage from './components/auth/LoginPage';
@@ -22,6 +23,20 @@ function App() {
 
   return (
     <Router>
+      {/* Version indicator for debugging */}
+      <div style={{
+        position: 'fixed',
+        bottom: '5px',
+        right: '5px',
+        fontSize: '10px',
+        color: 'rgba(0,0,0,0.3)',
+        zIndex: 9999,
+        padding: '2px 5px',
+        backgroundColor: 'rgba(255,255,255,0.7)',
+        borderRadius: '3px'
+      }}>
+        v{VERSION} ({BUILD_TIME.substring(0, 16).replace('T', ' ')})
+      </div>
       <Routes>
         <Route 
           path="/login" 

@@ -12,8 +12,8 @@ RUN npm ci
 # Copy source code
 COPY . .
 
-# Build the application (Vite handles TypeScript compilation)
-RUN npm run build:prod
+# Build the application with build time environment variable
+RUN VITE_BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%S.000Z") npm run build:prod
 
 # Production stage
 FROM nginx:alpine
