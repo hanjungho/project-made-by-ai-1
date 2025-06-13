@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
-import { Plus, Filter, CheckCircle, Circle, Calendar, User, Image, Clock, Flag } from 'lucide-react';
+import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
+import { Plus, CheckCircle, Circle, Calendar, User, Image, Clock, Flag } from 'lucide-react';
 import { useAppStore } from '../../store/appStore';
-import { useAuthStore } from '../../store/authStore';
 import { Task } from '../../types';
 import TaskModal from './TaskModal';
 import { format } from 'date-fns';
@@ -11,8 +10,8 @@ import { ko } from 'date-fns/locale';
 import toast from 'react-hot-toast';
 
 const TasksPage: React.FC = () => {
-  const { tasks, toggleTask, deleteTask, mode, currentGroup, reorderTasks } = useAppStore();
-  const { user } = useAuthStore();
+  const { tasks, toggleTask, mode, currentGroup, reorderTasks } = useAppStore();
+  // const { user } = useAuthStore(); // Commented out as it's not used
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
@@ -44,12 +43,12 @@ const TasksPage: React.FC = () => {
     }
   };
 
-  const onDragEnd = (result: any) => {
+  const onDragEnd = (result: DropResult) => {
     if (!result.destination) return;
-    
+
     const startIndex = result.source.index;
     const endIndex = result.destination.index;
-    
+
     reorderTasks(startIndex, endIndex);
     toast.success('할일 순서가 변경되었습니다');
   };
@@ -95,7 +94,7 @@ const TasksPage: React.FC = () => {
               {mode === 'personal' ? '개인 할일을 관리하세요' : '그룹 할일을 함께 관리하세요'}
             </p>
           </div>
-          
+
           {/* Progress Ring */}
           <div className="relative w-16 h-16">
             <svg className="w-16 h-16 transform -rotate-90" viewBox="0 0 36 36">
@@ -107,7 +106,7 @@ const TasksPage: React.FC = () => {
                 d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
               />
               <path
-                className="text-blue-600"
+                className="text-primary-600"
                 stroke="currentColor"
                 strokeWidth="3"
                 strokeDasharray={`${completionRate}, 100`}
@@ -130,16 +129,16 @@ const TasksPage: React.FC = () => {
                 key={option.value}
                 className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                   filter === option.value
-                    ? 'bg-white text-blue-600 shadow-sm'
+                    ? 'bg-white text-primary-600 shadow-sm'
                     : 'text-gray-600 hover:text-gray-800'
                 }`}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => setFilter(option.value as any)}
+                onClick={() => setFilter(option.value as 'all' | 'pending' | 'completed')}
               >
                 <span>{option.label}</span>
                 <span className={`px-2 py-0.5 rounded-full text-xs ${
-                  filter === option.value ? 'bg-blue-100 text-blue-600' : 'bg-gray-200 text-gray-600'
+                  filter === option.value ? 'bg-primary-100 text-primary-600' : 'bg-gray-200 text-gray-600'
                 }`}>
                   {option.count}
                 </span>
@@ -149,7 +148,7 @@ const TasksPage: React.FC = () => {
 
           {/* Add Task Button */}
           <motion.button
-            className="flex items-center space-x-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors shadow-lg"
+            className="flex items-center space-x-2 px-6 py-3 bg-primary-600 text-white rounded-xl font-medium hover:bg-primary-700 transition-colors shadow-lg"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleAddTask}
@@ -174,7 +173,7 @@ const TasksPage: React.FC = () => {
             <h3 className="text-xl font-semibold text-gray-900 mb-2">할일이 없습니다</h3>
             <p className="text-gray-600 mb-6">새로운 할일을 추가해서 시작해보세요!</p>
             <motion.button
-              className="px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors"
+              className="px-6 py-3 bg-[#df6d14] text-white rounded-xl font-medium hover:bg-[#df6d14]/90 transition-colors"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleAddTask}
@@ -197,11 +196,19 @@ const TasksPage: React.FC = () => {
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.3, delay: index * 0.05 }}
-                          className={`p-6 hover:bg-gray-50 transition-all duration-200 cursor-pointer ${
+                          className={`p-6 hover:bg-gray-50 transition-all duration-200 cursor-pointer relative ${
                             task.completed ? 'opacity-75' : ''
-                          } ${snapshot.isDragging ? 'shadow-lg rounded-xl bg-white' : ''}`}
+                          } ${snapshot.isDragging ? 'shadow-lg rounded-xl bg-white z-50' : ''}`}
                           onClick={() => handleTaskClick(task)}
                         >
+                          {/* Priority indicator */}
+                          <div 
+                            className={`absolute left-0 top-0 w-1 h-full ${
+                              task.priority === 'high' ? 'bg-red-500' : 
+                              task.priority === 'medium' ? 'bg-yellow-500' : 'bg-green-500'
+                            }`}
+                          />
+
                           <div className="flex items-start space-x-4">
                             {/* Checkbox */}
                             <motion.button
@@ -235,6 +242,12 @@ const TasksPage: React.FC = () => {
                                       그룹
                                     </span>
                                   )}
+                                  {task.completed && (
+                                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+                                      <CheckCircle className="w-3 h-3 inline mr-1" />
+                                      완료
+                                    </span>
+                                  )}
                                 </div>
                               </div>
 
@@ -249,9 +262,14 @@ const TasksPage: React.FC = () => {
                               {/* Meta Info */}
                               <div className="flex items-center space-x-6 text-sm text-gray-500">
                                 {task.dueDate && (
-                                  <div className="flex items-center space-x-1">
+                                  <div className={`flex items-center space-x-1 ${
+                                    new Date(task.dueDate) < new Date() && !task.completed ? 'text-red-500' : ''
+                                  }`}>
                                     <Calendar className="w-4 h-4" />
                                     <span>{format(new Date(task.dueDate), 'M월 d일', { locale: ko })}</span>
+                                    {new Date(task.dueDate) < new Date() && !task.completed && (
+                                      <span className="text-red-500 font-medium">(지연)</span>
+                                    )}
                                   </div>
                                 )}
                                 {task.assignedTo && currentGroup && (
@@ -263,16 +281,39 @@ const TasksPage: React.FC = () => {
                                   </div>
                                 )}
                                 {task.proofImage && (
-                                  <div className="flex items-center space-x-1">
+                                  <div className="flex items-center space-x-1 text-green-600">
                                     <Image className="w-4 h-4" />
                                     <span>인증 완료</span>
                                   </div>
                                 )}
                                 <div className="flex items-center space-x-1">
                                   <Clock className="w-4 h-4" />
-                                  <span>{format(new Date(task.createdAt), 'M월 d일 생성', { locale: ko })}</span>
+                                  <span>
+                                    {task.completed && task.completedAt 
+                                      ? `${format(new Date(task.completedAt), 'M월 d일 완료', { locale: ko })}`
+                                      : `${format(new Date(task.createdAt), 'M월 d일 생성', { locale: ko })}`
+                                    }
+                                  </span>
                                 </div>
                               </div>
+
+                              {/* Progress indicator for tasks with subtasks */}
+                              {task.subtasks && task.subtasks.length > 0 && (
+                                <div className="mt-3">
+                                  <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
+                                    <span>하위 작업</span>
+                                    <span>{task.subtasks.filter(st => st.completed).length}/{task.subtasks.length}</span>
+                                  </div>
+                                  <div className="w-full bg-gray-200 rounded-full h-1.5">
+                                    <div 
+                                      className="bg-[#df6d14] h-1.5 rounded-full transition-all duration-300"
+                                      style={{ 
+                                        width: `${task.subtasks.length > 0 ? (task.subtasks.filter(st => st.completed).length / task.subtasks.length) * 100 : 0}%` 
+                                      }}
+                                    ></div>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </motion.div>

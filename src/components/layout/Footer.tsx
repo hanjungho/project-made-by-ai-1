@@ -49,7 +49,7 @@ const Footer: React.FC = () => {
   ];
 
   return (
-    <footer className="bg-white border-t border-gray-200 mt-20">
+    <footer className="bg-white border-t border-gray-200 mt-20 hidden md:block">
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8">
           {/* Company Info */}
@@ -60,12 +60,7 @@ const Footer: React.FC = () => {
               transition={{ duration: 0.6 }}
             >
               <div className="flex items-center space-x-3 mb-6">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
-                  <Home className="w-6 h-6 text-white" />
-                </div>
-                <div className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  우리.zip
-                </div>
+                <img src="/image/Logo.png" alt="우리.zip" className="w-12 h-12" />
               </div>
               <p className="text-gray-600 mb-6 leading-relaxed">
                 하우스메이트와 함께하는 스마트한 공동생활 관리 플랫폼. 
@@ -102,7 +97,7 @@ const Footer: React.FC = () => {
                   <li key={link.name}>
                     <motion.a
                       href={link.href}
-                      className="text-gray-600 hover:text-blue-600 transition-colors"
+                      className="text-gray-600 hover:text-primary-600 transition-colors"
                       whileHover={{ x: 4 }}
                     >
                       {link.name}
@@ -125,7 +120,7 @@ const Footer: React.FC = () => {
                 <motion.a
                   key={social.label}
                   href={social.href}
-                  className="text-gray-400 hover:text-blue-600 transition-colors"
+                  className="text-gray-400 hover:text-primary-600 transition-colors"
                   whileHover={{ scale: 1.2 }}
                   whileTap={{ scale: 0.9 }}
                   aria-label={social.label}

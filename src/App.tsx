@@ -5,6 +5,7 @@ import Layout from './components/layout/Layout';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import LoginPage from './components/auth/LoginPage';
 import HomePage from './components/home/HomePage';
+import DashboardPage from './components/dashboard/DashboardPage';
 import CalendarPage from './components/calendar/CalendarPage';
 import TasksPage from './components/tasks/TasksPage';
 import ExpensesPage from './components/expenses/ExpensesPage';
@@ -12,6 +13,7 @@ import GamesPage from './components/games/GamesPage';
 import RoulettePage from './components/games/RoulettePage';
 import AIAssistantPage from './components/ai/AIAssistantPage';
 import CommunityPage from './components/community/CommunityPage';
+import SettingsPage from './components/settings/SettingsPage';
 
 function App() {
   const { isAuthenticated } = useAuthStore();
@@ -23,14 +25,18 @@ function App() {
       <Routes>
         <Route 
           path="/login" 
-          element={isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />} 
+          element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />} 
         />
         <Route
           path="/"
+          element={<HomePage />}
+        />
+        <Route
+          path="/dashboard"
           element={
             <ProtectedRoute>
               <Layout>
-                <HomePage />
+                <DashboardPage />
               </Layout>
             </ProtectedRoute>
           }
@@ -96,21 +102,21 @@ function App() {
           }
         />
         <Route
-          path="/ai-assistant"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <AIAssistantPage />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
           path="/community"
           element={
             <ProtectedRoute>
               <Layout>
                 <CommunityPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <SettingsPage />
               </Layout>
             </ProtectedRoute>
           }

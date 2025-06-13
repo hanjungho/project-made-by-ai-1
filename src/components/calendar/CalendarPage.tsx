@@ -83,7 +83,7 @@ const CalendarPage: React.FC = () => {
                 key={option.value}
                 className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                   currentView === option.value
-                    ? 'bg-white text-blue-600 shadow-sm'
+                    ? 'bg-white text-primary-600 shadow-sm'
                     : 'text-gray-600 hover:text-gray-800'
                 }`}
                 whileHover={{ scale: 1.05 }}
@@ -98,7 +98,7 @@ const CalendarPage: React.FC = () => {
 
           {/* Add Event Button */}
           <motion.button
-            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+            className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setShowEventModal(true)}
@@ -142,12 +142,12 @@ const CalendarPage: React.FC = () => {
                   isCurrentMonth 
                     ? 'bg-white hover:bg-gray-50' 
                     : 'bg-gray-50 text-gray-400'
-                } ${isToday ? 'bg-blue-50' : ''}`}
+                } ${isToday ? 'bg-primary-50' : ''}`}
                 onClick={() => handleDateClick(day)}
                 whileHover={{ scale: 1.02 }}
               >
                 <div className={`text-sm font-medium mb-1 ${
-                  isToday ? 'text-blue-600' : isCurrentMonth ? 'text-gray-800' : 'text-gray-400'
+                  isToday ? 'text-primary-600' : isCurrentMonth ? 'text-gray-800' : 'text-gray-400'
                 }`}>
                   {format(day, 'd')}
                 </div>
@@ -158,7 +158,7 @@ const CalendarPage: React.FC = () => {
                     <div
                       key={event.id}
                       className={`text-xs px-2 py-1 rounded truncate ${
-                        event.category === 'personal' ? 'bg-blue-100 text-blue-800' :
+                        event.category === 'personal' ? 'bg-primary-100 text-primary-800' :
                         event.category === 'group' ? 'bg-purple-100 text-purple-800' :
                         event.category === 'bill' ? 'bg-red-100 text-red-800' :
                         event.category === 'cleaning' ? 'bg-green-100 text-green-800' :

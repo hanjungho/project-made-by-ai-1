@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Send, Bot, User, ThumbsUp, ThumbsDown, Copy, Sparkles } from 'lucide-react';
-import { useAuthStore } from '../../store/authStore';
+import { Send, Bot, User, ThumbsUp, ThumbsDown, Copy } from 'lucide-react';
+// import { useAuthStore } from '../../store/authStore'; // Commented out as it's not used
 
 interface Message {
   id: string;
@@ -11,7 +11,7 @@ interface Message {
 }
 
 const AIAssistantPage: React.FC = () => {
-  const { user } = useAuthStore();
+  // const { user } = useAuthStore(); // Commented out as it's not used
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -225,7 +225,7 @@ const AIAssistantPage: React.FC = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-6 text-white mb-6"
+        className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-2xl p-6 text-white mb-6"
       >
         <div className="flex items-center space-x-4">
           <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
@@ -233,7 +233,7 @@ const AIAssistantPage: React.FC = () => {
           </div>
           <div>
             <h1 className="text-2xl font-bold">AI 판단 도우미</h1>
-            <p className="text-indigo-100">하우스메이트 생활의 똑똑한 조언자</p>
+            <p className="text-primary-100">하우스메이트 생활의 똑똑한 조언자</p>
           </div>
         </div>
       </motion.div>
@@ -278,8 +278,8 @@ const AIAssistantPage: React.FC = () => {
                 {/* Avatar */}
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                   message.type === 'user' 
-                    ? 'bg-blue-600 text-white' 
-                    : 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white'
+                    ? 'bg-primary-600 text-white' 
+                    : 'bg-gradient-to-r from-primary-500 to-primary-600 text-white'
                 }`}>
                   {message.type === 'user' ? (
                     <User className="w-4 h-4" />
@@ -291,13 +291,13 @@ const AIAssistantPage: React.FC = () => {
                 {/* Message Bubble */}
                 <div className={`rounded-2xl px-4 py-3 ${
                   message.type === 'user'
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-primary-600 text-white'
                     : 'bg-gray-100 text-gray-800'
                 }`}>
                   <div className="whitespace-pre-wrap text-sm leading-relaxed">
                     {message.content}
                   </div>
-                  
+
                   {/* AI Message Actions */}
                   {message.type === 'ai' && (
                     <div className="flex items-center space-x-2 mt-3 pt-2 border-t border-gray-200">
@@ -338,7 +338,7 @@ const AIAssistantPage: React.FC = () => {
               className="flex justify-start"
             >
               <div className="flex items-start space-x-3">
-                <div className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full flex items-center justify-center text-white">
+                <div className="w-8 h-8 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full flex items-center justify-center text-white">
                   <Bot className="w-4 h-4" />
                 </div>
                 <div className="bg-gray-100 rounded-2xl px-4 py-3">
@@ -362,10 +362,10 @@ const AIAssistantPage: React.FC = () => {
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSendMessage(inputMessage)}
               placeholder="궁금한 것을 물어보세요..."
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
             <motion.button
-              className="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors disabled:opacity-50"
+              className="p-2 bg-primary-600 text-white rounded-full hover:bg-primary-700 transition-colors disabled:opacity-50"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => handleSendMessage(inputMessage)}

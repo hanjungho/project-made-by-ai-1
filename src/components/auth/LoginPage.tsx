@@ -61,7 +61,7 @@ const LoginPage: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-100 flex items-center justify-center p-6">
       <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
         {/* Left Side - Branding */}
         <motion.div
@@ -70,18 +70,13 @@ const LoginPage: React.FC = () => {
           transition={{ duration: 0.8 }}
           className="text-center lg:text-left"
         >
-          <div className="flex items-center justify-center lg:justify-start space-x-4 mb-8">
-            <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center">
-              <Home className="w-8 h-8 text-white" />
-            </div>
-            <div className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              우리.zip
-            </div>
+          <div className="flex items-center justify-center lg:justify-start mb-8">
+            <img src="/image/Logo.png" alt="우리.zip" className="w-24 h-24" />
           </div>
           
           <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6 leading-tight">
             우리의 하루를,<br />
-            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
               우리.zip에 담다
             </span>
           </h1>
@@ -100,8 +95,8 @@ const LoginPage: React.FC = () => {
                 transition={{ duration: 0.6, delay: index * 0.1 }}
                 className="text-center"
               >
-                <div className="w-12 h-12 bg-gradient-to-r from-blue-100 to-purple-100 rounded-xl flex items-center justify-center mx-auto mb-3">
-                  <feature.icon className="w-6 h-6 text-blue-600" />
+                <div className="w-12 h-12 bg-gradient-to-r from-primary-100 to-primary-200 rounded-xl flex items-center justify-center mx-auto mb-3">
+                  <feature.icon className="w-6 h-6 text-primary-600" />
                 </div>
                 <h3 className="font-semibold text-gray-800 mb-1">{feature.title}</h3>
                 <p className="text-sm text-gray-600">{feature.description}</p>
@@ -132,7 +127,7 @@ const LoginPage: React.FC = () => {
               disabled={isLoading !== null}
             >
               {isLoading === 'google' ? (
-                <div className="w-6 h-6 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" />
+                <div className="w-6 h-6 border-2 border-gray-300 border-t-primary-600 rounded-full animate-spin" />
               ) : (
                 <FaGoogle className="w-6 h-6 text-red-500" />
               )}
@@ -180,8 +175,8 @@ const LoginPage: React.FC = () => {
 
           <div className="mt-8 pt-6 border-t border-gray-200 text-center">
             <p className="text-sm text-gray-500">
-              로그인하면 <a href="#" className="text-blue-600 hover:underline">이용약관</a> 및{' '}
-              <a href="#" className="text-blue-600 hover:underline">개인정보처리방침</a>에 동의하게 됩니다.
+              로그인하면 <a href="#" className="text-primary-600 hover:underline">이용약관</a> 및{' '}
+              <a href="#" className="text-primary-600 hover:underline">개인정보처리방침</a>에 동의하게 됩니다.
             </p>
           </div>
         </motion.div>

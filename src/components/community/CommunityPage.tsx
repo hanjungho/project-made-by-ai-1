@@ -31,14 +31,13 @@ const CommunityPage: React.FC = () => {
     { id: 'review', name: '후기/리뷰', icon: Star, color: 'text-indigo-600' },
   ];
 
-  // 필터링된 게시글
+  // 필터링된 게시글 - 모드 구분 없이 모든 게시글 표시
   const filteredPosts = posts.filter(post => {
     const matchesSearch = post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          post.content.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || post.category === selectedCategory;
-    const matchesMode = mode === 'personal' ? !post.groupId : post.groupId;
     
-    return matchesSearch && matchesCategory && matchesMode;
+    return matchesSearch && matchesCategory;
   });
 
   // 정렬된 게시글
@@ -64,28 +63,25 @@ const CommunityPage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-6xl mx-auto space-y-6">
       {/* 헤더 */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-3xl p-8 text-white"
+        className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-3xl p-8 text-white"
       >
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold mb-2">커뮤니티</h1>
             <p className="text-purple-100">
-              {mode === 'personal' 
-                ? '다양한 생활 정보를 공유하고 소통해보세요!' 
-                : '우리 그룹의 소중한 정보를 나누어요!'
-              }
+              다양한 생활 정보를 공유하고 소통해보세요!
             </p>
           </div>
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setIsCreateModalOpen(true)}
-            className="flex items-center space-x-2 bg-white text-purple-600 px-6 py-3 rounded-xl font-medium hover:bg-gray-50 transition-colors"
+            className="flex items-center space-x-2 bg-white text-primary-600 px-6 py-3 rounded-xl font-medium hover:bg-gray-50 transition-colors"
           >
             <Plus className="w-5 h-5" />
             <span>글쓰기</span>
@@ -146,7 +142,7 @@ const CommunityPage: React.FC = () => {
               onClick={() => setSelectedCategory(category.id)}
               className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                 selectedCategory === category.id
-                  ? 'bg-purple-100 text-purple-700 border-2 border-purple-200'
+                  ? 'bg-primary-100 text-primary-700 border-2 border-primary-200'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
@@ -227,7 +223,7 @@ const CommunityPage: React.FC = () => {
             </p>
             <button
               onClick={() => setIsCreateModalOpen(true)}
-              className="bg-purple-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-purple-700 transition-colors"
+              className="bg-primary-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-primary-700 transition-colors"
             >
               글쓰기
             </button>

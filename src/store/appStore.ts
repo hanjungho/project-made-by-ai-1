@@ -10,8 +10,11 @@ interface AppState {
   // Group Management
   currentGroup: Group | null;
   groups: Group[];
+  joinedGroups: Group[]; // 가입한 그룹들
   setCurrentGroup: (group: Group | null) => void;
   addGroup: (group: Group) => void;
+  joinGroup: (group: Group) => void; // 그룹 가입
+  leaveGroup: (groupId: string) => void; // 그룹 탈퇴
   updateGroup: (id: string, updates: Partial<Group>) => void;
   
   // Calendar
@@ -346,6 +349,21 @@ const sampleGroup: Group = {
   maxMembers: 4
 };
 
+const sampleGroup2: Group = {
+  id: 'group2',
+  name: '회사 동료들',
+  description: '사무실 근처 아파트 룸메이트',
+  code: 'DEF456',
+  members: [
+    { id: 'user1', name: '김우리', email: 'woori@gmail.com', provider: 'google' },
+    { id: 'user4', name: '최직장', email: 'work@company.com', provider: 'google' },
+    { id: 'user5', name: '한동료', email: 'colleague@company.com', provider: 'kakao' }
+  ],
+  createdBy: 'user4',
+  createdAt: new Date(),
+  maxMembers: 3
+};
+
 export const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
@@ -353,12 +371,25 @@ export const useAppStore = create<AppState>()(
       setMode: (mode) => set({ mode }),
       
       currentGroup: sampleGroup,
-      groups: [sampleGroup],
+      groups: [sampleGroup, sampleGroup2],
+      joinedGroups: [sampleGroup, sampleGroup2], // 두 그룹 모두 가입된 상태
       setCurrentGroup: (group) => set({ currentGroup: group }),
-      addGroup: (group) => set((state) => ({ groups: [...state.groups, group] })),
+      addGroup: (group) => set((state) => ({ 
+        groups: [...state.groups, group],
+        joinedGroups: [...state.joinedGroups, group]
+      })),
+      joinGroup: (group) => set((state) => ({ 
+        joinedGroups: [...state.joinedGroups, group]
+      })),
+      leaveGroup: (groupId) => set((state) => ({ 
+        joinedGroups: state.joinedGroups.filter(g => g.id !== groupId),
+        currentGroup: state.currentGroup?.id === groupId ? null : state.currentGroup
+      })),
       updateGroup: (id, updates) =>
         set((state) => ({
           groups: state.groups.map((g) => (g.id === id ? { ...g, ...updates } : g)),
+          joinedGroups: state.joinedGroups.map((g) => (g.id === id ? { ...g, ...updates } : g)),
+          currentGroup: state.currentGroup?.id === id ? { ...state.currentGroup, ...updates } : state.currentGroup
         })),
       
       currentView: 'month',
