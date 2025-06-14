@@ -12,6 +12,12 @@ import TasksPage from './components/tasks/TasksPage';
 import ExpensesPage from './components/expenses/ExpensesPage';
 import GamesPage from './components/games/GamesPage';
 import RoulettePage from './components/games/RoulettePage';
+import RockPaperScissorsPage from './components/games/RockPaperScissorsPage';
+import SlotMachine from './components/games/SlotMachine';
+import DicePage from './components/games/DicePage';
+import MemoryGamePage from './components/games/MemoryGamePage';
+import QuizGame from './components/games/QuizGame';
+import DartsGame from './components/games/DartsGame';
 import AIAssistantPage from './components/ai/AIAssistantPage';
 import CommunityPage from './components/community/CommunityPage';
 import SettingsPage from './components/settings/SettingsPage';
@@ -102,6 +108,66 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <RoulettePage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/games/rps"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <RockPaperScissorsPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/games/slot"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <SlotMachine />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/games/dice"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <DicePage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/games/memory"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <MemoryGamePage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/games/quiz"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <QuizGame />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/games/darts"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <DartsGame />
               </Layout>
             </ProtectedRoute>
           }
