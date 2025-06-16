@@ -17,7 +17,7 @@ interface EventModalProps {
 const EventModal: React.FC<EventModalProps> = ({ selectedDate, onClose, event }) => {
   const { addEvent, updateEvent, deleteEvent, deleteEventSeries, deleteFutureEvents, mode, currentGroup, joinedGroups } = useAppStore();
   const { user } = useAuthStore();
-  
+
   const [formData, setFormData] = useState({
     title: event?.title || '',
     description: event?.description || '',
@@ -65,11 +65,11 @@ const EventModal: React.FC<EventModalProps> = ({ selectedDate, onClose, event })
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     console.log('Form submitted with data:', formData);
     console.log('User:', user);
     console.log('Event (editing):', event);
-    
+
     if (!formData.title.trim()) {
       toast.error('제목을 입력해주세요.');
       return;
@@ -106,12 +106,12 @@ const EventModal: React.FC<EventModalProps> = ({ selectedDate, onClose, event })
       startTime: formData.isAllDay ? undefined : formData.startTime,
       endTime: formData.isAllDay ? undefined : formData.endTime,
       isAllDay: formData.isAllDay,
-      category: formData.category as any,
+      category: formData.category as Event['category'],
       color: categories.find(c => c.value === formData.category)?.color || '',
       groupId: formData.isGroupEvent ? formData.groupId : undefined,
       userId: user.id,
-      repeat: formData.repeat as any,
-      repeatEndDate: formData.repeat !== 'none' ? formData.repeatEndDate : undefined,
+      repeat: formData.repeat as Event['repeat'],
+      repeatEndDate: formData.repeat !== 'none' ? (formData.repeatEndDate ? new Date(formData.repeatEndDate) : undefined) : undefined,
     };
 
     console.log('Creating event with data:', eventData);
@@ -124,7 +124,7 @@ const EventModal: React.FC<EventModalProps> = ({ selectedDate, onClose, event })
         addEvent(eventData);
         toast.success('일정이 추가되었습니다.');
       }
-      
+
       console.log('Event operation completed successfully');
       onClose();
     } catch (error) {
@@ -135,10 +135,10 @@ const EventModal: React.FC<EventModalProps> = ({ selectedDate, onClose, event })
 
   const handleDelete = () => {
     if (!event) return;
-    
+
     // 반복 일정인지 확인
     const isRepeatedEvent = event.repeat !== 'none' || event.originalEventId || event.isRepeated;
-    
+
     if (isRepeatedEvent) {
       setShowDeleteModal(true);
     } else {
@@ -152,7 +152,7 @@ const EventModal: React.FC<EventModalProps> = ({ selectedDate, onClose, event })
 
   const handleDeleteChoice = (choice: 'single' | 'future' | 'all') => {
     if (!event) return;
-    
+
     switch (choice) {
       case 'single':
         deleteEvent(event.id);
@@ -167,7 +167,7 @@ const EventModal: React.FC<EventModalProps> = ({ selectedDate, onClose, event })
         toast.success('모든 반복 일정이 삭제되었습니다.');
         break;
     }
-    
+
     setShowDeleteModal(false);
     onClose();
   };
@@ -227,7 +227,7 @@ const EventModal: React.FC<EventModalProps> = ({ selectedDate, onClose, event })
                 <p className="text-gray-600 text-sm">{event.description}</p>
               )}
             </div>
-            
+
             <div className="space-y-3">
               <div className="flex items-center space-x-3">
                 <CalendarDays className="w-4 h-4 text-gray-500" />
@@ -238,14 +238,14 @@ const EventModal: React.FC<EventModalProps> = ({ selectedDate, onClose, event })
                   )}
                 </span>
               </div>
-              
+
               <div className="flex items-center space-x-3">
                 <Clock className="w-4 h-4 text-gray-500" />
                 <span className="text-sm text-gray-700">
                   {event.isAllDay ? '하루 종일' : `${event.startTime} - ${event.endTime}`}
                 </span>
               </div>
-              
+
               <div className="flex items-center space-x-3">
                 <Tag className="w-4 h-4 text-gray-500" />
                 <div className="flex items-center space-x-2">
@@ -266,7 +266,7 @@ const EventModal: React.FC<EventModalProps> = ({ selectedDate, onClose, event })
                   )}
                 </div>
               </div>
-              
+
               {event.groupId && (
                 <div className="flex items-center space-x-3">
                   <Users className="w-4 h-4 text-gray-500" />
@@ -275,7 +275,7 @@ const EventModal: React.FC<EventModalProps> = ({ selectedDate, onClose, event })
                   </span>
                 </div>
               )}
-              
+
               {event.repeat !== 'none' && (
                 <div className="flex items-center space-x-3">
                   <Repeat className="w-4 h-4 text-gray-500" />
@@ -571,11 +571,11 @@ const EventModal: React.FC<EventModalProps> = ({ selectedDate, onClose, event })
               </div>
               <h3 className="text-lg font-semibold text-gray-800">반복 일정 삭제</h3>
             </div>
-            
+
             <p className="text-gray-600 mb-6 text-sm">
               이 일정은 반복 일정입니다. 어떻게 삭제하시겠습니까?
             </p>
-            
+
             <div className="space-y-3">
               <motion.button
                 className="w-full p-3 text-left rounded-lg hover:bg-gray-50 border border-gray-200 transition-colors"
@@ -586,7 +586,7 @@ const EventModal: React.FC<EventModalProps> = ({ selectedDate, onClose, event })
                 <div className="font-medium text-gray-800">이 일정만 삭제</div>
                 <div className="text-xs text-gray-500">선택한 날짜의 일정만 삭제됩니다</div>
               </motion.button>
-              
+
               <motion.button
                 className="w-full p-3 text-left rounded-lg hover:bg-orange-50 border border-orange-200 transition-colors"
                 whileHover={{ scale: 1.02 }}
@@ -598,7 +598,7 @@ const EventModal: React.FC<EventModalProps> = ({ selectedDate, onClose, event })
                   {format(new Date(event?.date || new Date()), 'M월 d일', { locale: ko })} 이후의 모든 반복 일정이 삭제됩니다
                 </div>
               </motion.button>
-              
+
               <motion.button
                 className="w-full p-3 text-left rounded-lg hover:bg-red-50 border border-red-200 transition-colors"
                 whileHover={{ scale: 1.02 }}
@@ -609,7 +609,7 @@ const EventModal: React.FC<EventModalProps> = ({ selectedDate, onClose, event })
                 <div className="text-xs text-red-600">관련된 모든 반복 일정이 삭제됩니다</div>
               </motion.button>
             </div>
-            
+
             <div className="flex justify-end space-x-3 mt-6">
               <motion.button
                 className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"

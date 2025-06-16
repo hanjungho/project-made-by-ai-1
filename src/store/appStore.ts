@@ -6,7 +6,7 @@ interface AppState {
   // Mode Management
   mode: AppMode;
   setMode: (mode: AppMode) => void;
-  
+
   // Group Management
   currentGroup: Group | null;
   groups: Group[];
@@ -17,7 +17,7 @@ interface AppState {
   leaveGroup: (groupId: string) => void; // 그룹 탈퇴
   deleteGroup: (groupId: string) => void; // 그룹 삭제
   updateGroup: (id: string, updates: Partial<Group>) => void;
-  
+
   // Calendar
   currentView: ViewType;
   currentDate: Date;
@@ -29,7 +29,7 @@ interface AppState {
   deleteEvent: (id: string) => void;
   deleteEventSeries: (id: string) => void;
   deleteFutureEvents: (id: string) => void;
-  
+
   // Tasks
   tasks: Task[];
   addTask: (task: Task) => void;
@@ -37,19 +37,19 @@ interface AppState {
   deleteTask: (id: string) => void;
   toggleTask: (id: string) => void;
   reorderTasks: (startIndex: number, endIndex: number) => void;
-  
+
   // Expenses
   expenses: Expense[];
   addExpense: (expense: Expense) => void;
   updateExpense: (id: string, updates: Partial<Expense>) => void;
   deleteExpense: (id: string) => void;
-  
+
   // Community
   posts: Post[];
   addPost: (post: Post) => void;
   updatePost: (id: string, updates: Partial<Post>) => void;
   deletePost: (id: string) => void;
-  
+
   // Games
   gameResults: GameResult[];
   addGameResult: (result: GameResult) => void;
@@ -369,10 +369,10 @@ const sampleGroup2: Group = {
 
 export const useAppStore = create<AppState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       mode: 'group',
       setMode: (mode) => set({ mode }),
-      
+
       currentGroup: sampleGroup,
       groups: [sampleGroup, sampleGroup2],
       joinedGroups: [sampleGroup, sampleGroup2], // 두 그룹 모두 가입된 상태
@@ -399,7 +399,7 @@ export const useAppStore = create<AppState>()(
           joinedGroups: state.joinedGroups.map((g) => (g.id === id ? { ...g, ...updates } : g)),
           currentGroup: state.currentGroup?.id === id ? { ...state.currentGroup, ...updates } : state.currentGroup
         })),
-      
+
       currentView: 'month',
       currentDate: new Date(),
       events: sampleEvents,
@@ -409,32 +409,41 @@ export const useAppStore = create<AppState>()(
         console.log('AppStore addEvent called with:', event);
         set((state) => {
           const eventsToAdd = [event];
-          
+
           // 반복 일정 생성
           if (event.repeat && event.repeat !== 'none') {
             const startDate = new Date(event.date);
-            const endDate = event.repeatEndDate ? new Date(event.repeatEndDate) : new Date(startDate.getFullYear() + 1, startDate.getMonth(), startDate.getDate());
-            
-            let currentDate = new Date(startDate);
-            let repeatCount = 0;
-            const maxRepeats = 100; // 최대 반복 횟수 제한
-            
-            while (currentDate <= endDate && repeatCount < maxRepeats) {
-              // 다음 반복 날짜 계산
-              switch (event.repeat) {
+            // Make sure repeatEndDate is a valid Date object
+            const endDate = event.repeatEndDate && event.repeatEndDate instanceof Date 
+              ? new Date(event.repeatEndDate) 
+              : new Date(startDate.getFullYear() + 1, startDate.getMonth(), startDate.getDate());
+
+            const calculateNextDate = (date: Date, repeatType: string): Date => {
+              const nextDate = new Date(date);
+              switch (repeatType) {
                 case 'daily':
-                  currentDate.setDate(currentDate.getDate() + 1);
+                  nextDate.setDate(nextDate.getDate() + 1);
                   break;
                 case 'weekly':
-                  currentDate.setDate(currentDate.getDate() + 7);
+                  nextDate.setDate(nextDate.getDate() + 7);
                   break;
                 case 'monthly':
-                  currentDate.setMonth(currentDate.getMonth() + 1);
+                  nextDate.setMonth(nextDate.getMonth() + 1);
                   break;
                 default:
                   break;
               }
-              
+              return nextDate;
+            };
+
+            let repeatCount = 0;
+            const maxRepeats = 100; // 최대 반복 횟수 제한
+            let currentDate = new Date(startDate);
+
+            // Skip the first date as it's already added as the original event
+            currentDate = calculateNextDate(currentDate, event.repeat);
+
+            while (currentDate <= endDate && repeatCount < maxRepeats) {
               if (currentDate <= endDate) {
                 const repeatEvent = {
                   ...event,
@@ -446,11 +455,13 @@ export const useAppStore = create<AppState>()(
                 };
                 eventsToAdd.push(repeatEvent);
               }
-              
+
               repeatCount++;
+              // Update currentDate for next iteration
+              currentDate = calculateNextDate(currentDate, event.repeat);
             }
           }
-          
+
           const newEvents = [...state.events, ...eventsToAdd];
           console.log('New events array:', newEvents);
           return { events: newEvents };
@@ -460,7 +471,7 @@ export const useAppStore = create<AppState>()(
         set((state) => {
           const event = state.events.find(e => e.id === id);
           if (!event) return state;
-          
+
           // 반복 일정 수정 시 모든 관련 일정 업데이트
           if (event.originalEventId || event.repeat !== 'none') {
             const originalId = event.originalEventId || id;
@@ -473,7 +484,7 @@ export const useAppStore = create<AppState>()(
               })
             };
           }
-          
+
           return {
             events: state.events.map((e) => (e.id === id ? { ...e, ...updates } : e))
           };
@@ -484,7 +495,7 @@ export const useAppStore = create<AppState>()(
         set((state) => {
           const event = state.events.find(e => e.id === id);
           if (!event) return state;
-          
+
           const originalId = event.originalEventId || id;
           return {
             events: state.events.filter((e) => e.id !== originalId && e.originalEventId !== originalId)
@@ -494,10 +505,10 @@ export const useAppStore = create<AppState>()(
         set((state) => {
           const event = state.events.find(e => e.id === id);
           if (!event) return state;
-          
+
           const originalId = event.originalEventId || id;
           const eventDate = new Date(event.date);
-          
+
           return {
             events: state.events.filter((e) => {
               if (e.id === originalId || e.originalEventId === originalId) {
@@ -507,7 +518,7 @@ export const useAppStore = create<AppState>()(
             })
           };
         }),
-      
+
       tasks: sampleTasks,
       addTask: (task) => set((state) => ({ tasks: [...state.tasks, task] })),
       updateTask: (id, updates) =>
@@ -528,7 +539,7 @@ export const useAppStore = create<AppState>()(
           result.splice(endIndex, 0, removed);
           return { tasks: result };
         }),
-      
+
       expenses: sampleExpenses,
       addExpense: (expense) => set((state) => ({ expenses: [...state.expenses, expense] })),
       updateExpense: (id, updates) =>
@@ -537,7 +548,7 @@ export const useAppStore = create<AppState>()(
         })),
       deleteExpense: (id) =>
         set((state) => ({ expenses: state.expenses.filter((e) => e.id !== id) })),
-      
+
       posts: samplePosts,
       addPost: (post) => set((state) => ({ posts: [...state.posts, post] })),
       updatePost: (id, updates) =>
@@ -545,7 +556,7 @@ export const useAppStore = create<AppState>()(
           posts: state.posts.map((p) => (p.id === id ? { ...p, ...updates } : p)),
         })),
       deletePost: (id) => set((state) => ({ posts: state.posts.filter((p) => p.id !== id) })),
-      
+
       gameResults: [],
       addGameResult: (result) => set((state) => ({ gameResults: [...state.gameResults, result] })),
     }),
