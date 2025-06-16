@@ -32,6 +32,33 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-storage',
+      storage: {
+        getItem: (name) => {
+          const str = localStorage.getItem(name);
+          if (!str) return null;
+
+          // Parse the JSON string and convert date strings back to Date objects
+          return JSON.parse(str, (key, value) => {
+            // Check if the value is a date string (ISO format)
+            if (typeof value === 'string' && 
+                /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/.test(value)) {
+              return new Date(value);
+            }
+            return value;
+          });
+        },
+        setItem: (name, value) => {
+          // Stringify the state and convert Date objects to ISO strings
+          const str = JSON.stringify(value, (key, value) => {
+            if (value instanceof Date) {
+              return value.toISOString();
+            }
+            return value;
+          });
+          localStorage.setItem(name, str);
+        },
+        removeItem: (name) => localStorage.removeItem(name)
+      }
     }
   )
 );
