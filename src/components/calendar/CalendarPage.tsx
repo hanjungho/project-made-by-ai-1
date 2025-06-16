@@ -88,19 +88,24 @@ const CalendarPage: React.FC = () => {
     console.log('Getting events for date:', date);
     console.log('All events:', events);
     console.log('Current mode:', mode);
-    
-    const targetDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    
+
+    // Ensure date is a valid Date object
+    const safeDate = date instanceof Date ? date : new Date();
+    const targetDate = new Date(safeDate.getFullYear(), safeDate.getMonth(), safeDate.getDate());
+
     const filteredEvents = events.filter(event => {
-      const eventStartDate = new Date(event.date);
+      // Ensure event.date is a valid Date object
+      const eventStartDate = event.date instanceof Date ? new Date(event.date) : new Date();
       const eventStart = new Date(eventStartDate.getFullYear(), eventStartDate.getMonth(), eventStartDate.getDate());
-      
-      const eventEndDate = event.endDate ? new Date(event.endDate) : eventStartDate;
+
+      // Ensure event.endDate is a valid Date object if it exists
+      const eventEndDate = event.endDate instanceof Date ? new Date(event.endDate) : 
+                          (event.endDate ? new Date(event.endDate) : eventStartDate);
       const eventEnd = new Date(eventEndDate.getFullYear(), eventEndDate.getMonth(), eventEndDate.getDate());
-      
+
       // 일정 기간 확인 (시작일 <= 조회날짜 <= 종료일)
       const isInDateRange = targetDate >= eventStart && targetDate <= eventEnd;
-      
+
       // 모드에 따른 필터링 수정
       let modeFilter = false;
       if (mode === 'personal') {
@@ -110,7 +115,7 @@ const CalendarPage: React.FC = () => {
         // 그룹모드: groupId가 있는 일정만 표시
         modeFilter = !!event.groupId;
       }
-      
+
       console.log(`Event ${event.title}:`, {
         eventStart,
         eventEnd,
@@ -121,10 +126,10 @@ const CalendarPage: React.FC = () => {
         mode,
         finalResult: isInDateRange && modeFilter
       });
-      
+
       return isInDateRange && modeFilter;
     });
-    
+
     console.log('Filtered events for date:', filteredEvents);
     return filteredEvents;
   };
@@ -249,7 +254,8 @@ const YearView: React.FC<{
     const monthStart = startOfMonth(month);
     const monthEnd = endOfMonth(month);
     return events.filter(event => {
-      const eventDate = new Date(event.date);
+      // Ensure event.date is a valid Date object
+      const eventDate = event.date instanceof Date ? new Date(event.date) : new Date();
       const modeFilter = mode === 'personal' ? !event.groupId : event.groupId;
       return eventDate >= monthStart && eventDate <= monthEnd && modeFilter;
     }).length;
@@ -261,7 +267,7 @@ const YearView: React.FC<{
         {months.map((month) => {
           const eventCount = getMonthEventCount(month);
           const isCurrentMonth = isSameMonth(month, new Date());
-          
+
           return (
             <motion.div
               key={month.toString()}
@@ -298,11 +304,11 @@ const MonthView: React.FC<{
 }> = ({ currentDate, onDateClick, onEventClick, getEventsForDate }) => {
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
-  
+
   // 달력에서 표시할 첫 번째 날과 마지막 날 (주 단위로 표시)
   const calendarStart = startOfWeek(monthStart, { weekStartsOn: 0 });
   const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 0 });
-  
+
   // 달력에 표시할 모든 날짜들
   const calendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
@@ -343,7 +349,7 @@ const MonthView: React.FC<{
               }`}>
                 {format(day, 'd')}
               </div>
-              
+
               {/* Events */}
               <div className="space-y-1">
                 {dayEvents.slice(0, 3).map((event) => (

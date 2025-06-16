@@ -91,15 +91,18 @@ const DashboardPage: React.FC = () => {
     console.log('Dashboard - Getting events for date:', date);
     console.log('Dashboard - All events:', events);
     console.log('Dashboard - Current mode:', mode);
-    
-    const targetDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    
+
+    // Ensure date is a valid Date object
+    const safeDate = date instanceof Date ? date : new Date();
+    const targetDate = new Date(safeDate.getFullYear(), safeDate.getMonth(), safeDate.getDate());
+
     const filteredEvents = events.filter(event => {
-      const eventDate = new Date(event.date);
+      // Ensure event.date is a valid Date object
+      const eventDate = event.date instanceof Date ? new Date(event.date) : new Date();
       const eventDateOnly = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
-      
+
       const isSameDay = targetDate.getTime() === eventDateOnly.getTime();
-      
+
       // 모드에 따른 필터링 수정
       let modeFilter = false;
       if (mode === 'personal') {
@@ -109,7 +112,7 @@ const DashboardPage: React.FC = () => {
         // 그룹모드: groupId가 있는 일정만 표시
         modeFilter = !!event.groupId;
       }
-      
+
       console.log(`Dashboard - Event ${event.title}:`, {
         eventDateOnly,
         targetDate,
@@ -119,10 +122,10 @@ const DashboardPage: React.FC = () => {
         mode,
         finalResult: isSameDay && modeFilter
       });
-      
+
       return isSameDay && modeFilter;
     });
-    
+
     console.log('Dashboard - Filtered events for date:', filteredEvents);
     return filteredEvents;
   };
@@ -359,7 +362,7 @@ const DashboardPage: React.FC = () => {
             <h3 className="text-lg font-bold text-gray-900">지출</h3>
             <PieChart className="w-5 h-5 text-primary-600" />
           </div>
-          
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Pie Chart */}
             <div className="h-48">
@@ -388,7 +391,7 @@ const DashboardPage: React.FC = () => {
                 </div>
               )}
             </div>
-            
+
             {/* Monthly Trend Bar Chart */}
             <div className="h-48">
               <ResponsiveContainer width="100%" height="100%">
@@ -430,7 +433,7 @@ const DashboardPage: React.FC = () => {
               </ResponsiveContainer>
             </div>
           </div>
-          
+
           {/* Category Legend with percentages */}
           <div className="mt-3 grid grid-cols-2 gap-1">
             {expenseChartData.map((category, index) => {
