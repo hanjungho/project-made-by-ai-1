@@ -15,6 +15,7 @@ interface AppState {
   addGroup: (group: Group) => void;
   joinGroup: (group: Group) => void; // 그룹 가입
   leaveGroup: (groupId: string) => void; // 그룹 탈퇴
+  deleteGroup: (groupId: string) => void; // 그룹 삭제
   updateGroup: (id: string, updates: Partial<Group>) => void;
   
   // Calendar
@@ -26,6 +27,8 @@ interface AppState {
   addEvent: (event: Event) => void;
   updateEvent: (id: string, updates: Partial<Event>) => void;
   deleteEvent: (id: string) => void;
+  deleteEventSeries: (id: string) => void;
+  deleteFutureEvents: (id: string) => void;
   
   // Tasks
   tasks: Task[];
@@ -86,7 +89,7 @@ const sampleEvents: Event[] = [
     date: new Date(2024, 11, 10),
     startTime: '15:00',
     endTime: '17:00',
-    category: 'personal',
+    category: 'meeting',
     color: 'bg-blue-100 text-blue-800',
     userId: 'user1',
     repeat: 'none'
@@ -340,11 +343,11 @@ const sampleGroup: Group = {
   description: '강남구 원룸 3명 공동생활',
   code: 'ABC123',
   members: [
-    { id: 'user1', name: '김우리', email: 'woori@gmail.com', provider: 'google' },
+    { id: 'google_user_123', name: '김우리', email: 'woori@gmail.com', provider: 'google' },
     { id: 'user2', name: '박집사', email: 'jipsa@kakao.com', provider: 'kakao' },
     { id: 'user3', name: '이하우스', email: 'house@naver.com', provider: 'naver' }
   ],
-  createdBy: 'user1',
+  createdBy: 'google_user_123', // 현재 사용자 ID와 일치
   createdAt: new Date(),
   maxMembers: 4
 };
@@ -385,6 +388,11 @@ export const useAppStore = create<AppState>()(
         joinedGroups: state.joinedGroups.filter(g => g.id !== groupId),
         currentGroup: state.currentGroup?.id === groupId ? null : state.currentGroup
       })),
+      deleteGroup: (groupId) => set((state) => ({ 
+        groups: state.groups.filter(g => g.id !== groupId),
+        joinedGroups: state.joinedGroups.filter(g => g.id !== groupId),
+        currentGroup: state.currentGroup?.id === groupId ? null : state.currentGroup
+      })),
       updateGroup: (id, updates) =>
         set((state) => ({
           groups: state.groups.map((g) => (g.id === id ? { ...g, ...updates } : g)),
@@ -397,13 +405,108 @@ export const useAppStore = create<AppState>()(
       events: sampleEvents,
       setCurrentView: (view) => set({ currentView: view }),
       setCurrentDate: (date) => set({ currentDate: date }),
-      addEvent: (event) => set((state) => ({ events: [...state.events, event] })),
+      addEvent: (event) => {
+        console.log('AppStore addEvent called with:', event);
+        set((state) => {
+          const eventsToAdd = [event];
+          
+          // 반복 일정 생성
+          if (event.repeat && event.repeat !== 'none') {
+            const startDate = new Date(event.date);
+            const endDate = event.repeatEndDate ? new Date(event.repeatEndDate) : new Date(startDate.getFullYear() + 1, startDate.getMonth(), startDate.getDate());
+            
+            let currentDate = new Date(startDate);
+            let repeatCount = 0;
+            const maxRepeats = 100; // 최대 반복 횟수 제한
+            
+            while (currentDate <= endDate && repeatCount < maxRepeats) {
+              // 다음 반복 날짜 계산
+              switch (event.repeat) {
+                case 'daily':
+                  currentDate.setDate(currentDate.getDate() + 1);
+                  break;
+                case 'weekly':
+                  currentDate.setDate(currentDate.getDate() + 7);
+                  break;
+                case 'monthly':
+                  currentDate.setMonth(currentDate.getMonth() + 1);
+                  break;
+                default:
+                  break;
+              }
+              
+              if (currentDate <= endDate) {
+                const repeatEvent = {
+                  ...event,
+                  id: `${event.id}_repeat_${repeatCount + 1}`,
+                  date: new Date(currentDate),
+                  endDate: event.endDate ? new Date(currentDate.getTime() + (new Date(event.endDate).getTime() - new Date(event.date).getTime())) : new Date(currentDate),
+                  originalEventId: event.id, // 원본 이벤트 ID 저장
+                  isRepeated: true // 반복 일정임을 표시
+                };
+                eventsToAdd.push(repeatEvent);
+              }
+              
+              repeatCount++;
+            }
+          }
+          
+          const newEvents = [...state.events, ...eventsToAdd];
+          console.log('New events array:', newEvents);
+          return { events: newEvents };
+        });
+      },
       updateEvent: (id, updates) =>
-        set((state) => ({
-          events: state.events.map((e) => (e.id === id ? { ...e, ...updates } : e)),
-        })),
+        set((state) => {
+          const event = state.events.find(e => e.id === id);
+          if (!event) return state;
+          
+          // 반복 일정 수정 시 모든 관련 일정 업데이트
+          if (event.originalEventId || event.repeat !== 'none') {
+            const originalId = event.originalEventId || id;
+            return {
+              events: state.events.map((e) => {
+                if (e.id === originalId || e.originalEventId === originalId) {
+                  return { ...e, ...updates };
+                }
+                return e;
+              })
+            };
+          }
+          
+          return {
+            events: state.events.map((e) => (e.id === id ? { ...e, ...updates } : e))
+          };
+        }),
       deleteEvent: (id) =>
         set((state) => ({ events: state.events.filter((e) => e.id !== id) })),
+      deleteEventSeries: (id) =>
+        set((state) => {
+          const event = state.events.find(e => e.id === id);
+          if (!event) return state;
+          
+          const originalId = event.originalEventId || id;
+          return {
+            events: state.events.filter((e) => e.id !== originalId && e.originalEventId !== originalId)
+          };
+        }),
+      deleteFutureEvents: (id) =>
+        set((state) => {
+          const event = state.events.find(e => e.id === id);
+          if (!event) return state;
+          
+          const originalId = event.originalEventId || id;
+          const eventDate = new Date(event.date);
+          
+          return {
+            events: state.events.filter((e) => {
+              if (e.id === originalId || e.originalEventId === originalId) {
+                return new Date(e.date) < eventDate;
+              }
+              return true;
+            })
+          };
+        }),
       
       tasks: sampleTasks,
       addTask: (task) => set((state) => ({ tasks: [...state.tasks, task] })),

@@ -22,13 +22,18 @@ export interface Event {
   title: string;
   description?: string;
   date: Date;
+  endDate?: Date;
   startTime?: string;
   endTime?: string;
-  category: 'personal' | 'group' | 'bill' | 'cleaning' | 'other';
+  isAllDay?: boolean;
+  category: 'bill' | 'cleaning' | 'meeting' | 'appointment' | 'health' | 'shopping' | 'travel' | 'other';
   color: string;
   groupId?: string;
   userId: string;
   repeat?: 'none' | 'daily' | 'weekly' | 'monthly';
+  repeatEndDate?: Date;
+  originalEventId?: string; // 반복 일정의 원본 이벤트 ID
+  isRepeated?: boolean; // 반복 생성된 일정인지 표시
 }
 
 export interface Task {
@@ -42,7 +47,6 @@ export interface Task {
   groupId?: string;
   userId: string;
   category: 'personal' | 'group';
-  proofImage?: string;
   createdAt: Date;
 }
 
@@ -64,7 +68,7 @@ export interface Post {
   id: string;
   title: string;
   content: string;
-  category: 'tip' | 'recipe' | 'cleaning' | 'shopping' | 'free' | 'question' | 'review';
+  category: 'roommate' | 'tip' | 'free' | 'question' | 'policy' | 'recipe' | 'cleaning' | 'shopping';
   author?: User;
   userId: string;
   groupId?: string;
@@ -84,9 +88,6 @@ export interface Comment {
   author?: User;
   userId: string;
   createdAt: Date;
-  likes?: number;
-  likedBy?: string[];
-  replies?: Comment[];
 }
 
 export interface GameResult {
@@ -100,4 +101,4 @@ export interface GameResult {
 
 export type AppMode = 'personal' | 'group';
 
-export type ViewType = 'month' | 'week' | 'day';
+export type ViewType = 'year' | 'month' | 'week' | 'day';

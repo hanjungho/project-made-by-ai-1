@@ -1,12 +1,117 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { motion, useScroll, useTransform, useInView, useAnimation } from 'framer-motion';
+import { motion, useScroll, useTransform, useInView, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, CheckSquare, CreditCard, Users, Gamepad2, Bot, ArrowRight, Star, ChevronDown, Menu, X, BarChart3 } from 'lucide-react';
+import { Calendar, CheckSquare, CreditCard, Users, Gamepad2, Bot, ArrowRight, ChevronDown, BarChart3, User, ChevronDown as ChevronDownIcon, Settings, LogOut, Bell } from 'lucide-react';
+import { FaGoogle, FaComment } from 'react-icons/fa';
+import { SiNaver } from 'react-icons/si';
+import { useAuthStore } from '../../store/authStore';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
-  const [showMenu, setShowMenu] = useState(false);
+  const { user, logout } = useAuthStore();
   const [activeSection, setActiveSection] = useState(0);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  
+  const notificationRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // 임시 알림 데이터
+  const [notifications] = useState([
+    {
+      id: '1',
+      type: 'task',
+      title: '할일 마감 알림',
+      message: '설거지 할일이 내일 마감입니다.',
+      timestamp: new Date(Date.now() - 10 * 60 * 1000), // 10분 전
+      read: false,
+      icon: '📋'
+    },
+    {
+      id: '2',
+      type: 'expense',
+      title: '지출 정산 요청',
+      message: '김철수님이 전기요금 정산을 요청했습니다.',
+      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2시간 전
+      read: false,
+      icon: '💰'
+    },
+    {
+      id: '3',
+      type: 'event',
+      title: '일정 알림',
+      message: '30분 후 "대청소" 일정이 시작됩니다.',
+      timestamp: new Date(Date.now() - 30 * 60 * 1000), // 30분 전
+      read: true,
+      icon: '📅'
+    },
+    {
+      id: '4',
+      type: 'group',
+      title: '그룹 알림',
+      message: '이영희님이 그룹에 참여했습니다.',
+      timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000), // 5시간 전
+      read: true,
+      icon: '👥'
+    }
+  ]);
+
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  // 외부 클릭 시 드롭다운 닫기
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
+      }
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const formatTimeAgo = (timestamp: Date) => {
+    const now = new Date();
+    const diffInMs = now.getTime() - timestamp.getTime();
+    const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    const diffInDays = Math.floor(diffInHours / 24);
+
+    if (diffInMinutes < 1) return '방금 전';
+    if (diffInMinutes < 60) return `${diffInMinutes}분 전`;
+    if (diffInHours < 24) return `${diffInHours}시간 전`;
+    return `${diffInDays}일 전`;
+  };
+
+  const markAllAsRead = () => {
+    // 실제로는 서버에 요청을 보내서 모든 알림을 읽음 처리
+    console.log('모든 알림을 읽음 처리');
+  };
+
+  const handleLogin = () => {
+    navigate('/login');
+    setShowUserMenu(false);
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+    setShowUserMenu(false);
+  };
+
+  const getProviderIcon = (provider: string) => {
+    switch (provider) {
+      case 'google': return <FaGoogle className="w-4 h-4" />;
+      case 'kakao': return <FaComment className="w-4 h-4 text-yellow-500" />;
+      case 'naver': return <SiNaver className="w-4 h-4" />;
+      default: return <User className="w-4 h-4" />;
+    }
+  };
 
   // Scroll progress
   const { scrollYProgress } = useScroll();
@@ -39,7 +144,7 @@ const HomePage: React.FC = () => {
       subtitle: "일정을 더 스마트하게",
       description: "개인과 그룹 일정을 하나의 캘린더에서 관리하세요. 월간, 주간, 일간 뷰로 일정을 효율적으로 계획할 수 있습니다.",
       icon: Calendar,
-      color: "from-blue-500 to-cyan-500",
+      color: "from-primary-500 to-primary-600",
       image: "/image/Logo.png",
       path: "/calendar"
     },
@@ -48,7 +153,7 @@ const HomePage: React.FC = () => {
       subtitle: "효율적인 작업 분배",
       description: "집안일을 공평하게 분배하고, 진행 상황을 실시간으로 추적하세요. 우선순위 설정과 마감일 알림으로 놓치는 일이 없습니다.",
       icon: CheckSquare,
-      color: "from-green-500 to-emerald-500",
+      color: "from-primary-500 to-primary-600",
       image: "/image/Logo.png",
       path: "/tasks"
     },
@@ -57,7 +162,7 @@ const HomePage: React.FC = () => {
       subtitle: "지출을 투명하게",
       description: "공동 지출을 자동으로 분할하고, 카테고리별 분석을 제공합니다. 월별 지출 패턴과 절약 팁도 확인할 수 있어요.",
       icon: CreditCard,
-      color: "from-purple-500 to-pink-500",
+      color: "from-primary-500 to-primary-600",
       image: "/image/Logo.png",
       path: "/expenses"
     },
@@ -66,7 +171,7 @@ const HomePage: React.FC = () => {
       subtitle: "재미있는 당번 정하기",
       description: "룰렛, 가위바위보, 주사위 등 8가지 다양한 게임으로 당번을 공정하게 정하세요. 게임 결과는 자동으로 기록됩니다.",
       icon: Gamepad2,
-      color: "from-orange-500 to-red-500",
+      color: "from-primary-500 to-primary-600",
       image: "/image/Logo.png",
       path: "/games"
     },
@@ -75,7 +180,7 @@ const HomePage: React.FC = () => {
       subtitle: "똑똑한 생활 조언",
       description: "AI가 여러분의 생활 패턴을 분석하여 맞춤형 조언을 제공합니다. 효율적인 일정 관리와 절약 팁을 받아보세요.",
       icon: Bot,
-      color: "from-indigo-500 to-purple-500",
+      color: "from-primary-500 to-primary-600",
       image: "/image/Logo.png",
       path: "/ai-assistant"
     },
@@ -84,7 +189,7 @@ const HomePage: React.FC = () => {
       subtitle: "정보 공유와 소통",
       description: "생활팁, 레시피, 청소법 등을 공유하고 다른 사용자들과 소통하세요. 카테고리별로 정리된 유용한 정보들을 만나보세요.",
       icon: Users,
-      color: "from-pink-500 to-rose-500",
+      color: "from-primary-500 to-primary-600",
       image: "/image/Logo.png",
       path: "/community"
     }
@@ -127,33 +232,36 @@ const HomePage: React.FC = () => {
 
   return (
     <div className="bg-white text-gray-900 overflow-hidden">
-      {/* Fixed Header */}
-      <motion.header 
-        className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-white/80 border-b border-gray-200/20"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-      >
-        <div className="max-w-7xl mx-auto px-6 h-20">
-          <div className="flex items-center justify-between h-full">
+      {/* Header */}
+      <header className="bg-white/80 backdrop-blur-md border-b border-gray-200/20 fixed top-0 left-0 right-0 z-50 shadow-sm">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="flex items-center justify-between h-20">
             {/* Logo */}
-            <motion.div 
+            <motion.div
               className="flex items-center cursor-pointer"
               whileHover={{ scale: 1.05 }}
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate('/')}
             >
-              <img src="/image/Logo.png" alt="우리.zip" className="w-12 h-12" />
+              <img src="/image/Logo.png" alt="우리.zip" className="w-16 h-16" />
             </motion.div>
 
-            {/* Desktop Navigation */}
+            {/* Navigation - 메인페이지에서는 스크롤 네비게이션 */}
             <nav className="hidden lg:flex items-center space-x-2">
-              {navigationItems.map((item, index) => (
+              {[
+                { label: '대시보드', section: 1, icon: BarChart3 },
+                { label: '캘린더', section: 2, icon: Calendar },
+                { label: '할일', section: 3, icon: CheckSquare },
+                { label: '가계부', section: 4, icon: CreditCard },
+                { label: '게임', section: 5, icon: Gamepad2 },
+                { label: 'AI 도우미', section: 6, icon: Bot },
+                { label: '커뮤니티', section: 7, icon: Users },
+              ].map((item) => (
                 <motion.button
-                  key={item.path}
-                  className="flex items-center space-x-2 px-4 py-2 rounded-xl transition-all duration-200 text-gray-600 hover:text-primary-600 hover:bg-gray-50"
+                  key={item.label}
+                  className="flex items-center space-x-2 px-4 py-2 rounded-xl transition-all duration-200 text-gray-600 hover:text-[#df6d14] hover:bg-gray-50"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => scrollToSection(index + 1)}
+                  onClick={() => scrollToSection(item.section)}
                 >
                   <item.icon className="w-5 h-5" />
                   <span className="font-medium">{item.label}</span>
@@ -161,74 +269,211 @@ const HomePage: React.FC = () => {
               ))}
             </nav>
 
-            {/* Right controls */}
+            {/* User Controls */}
             <div className="flex items-center space-x-4">
-              {/* Menu button */}
-              <motion.button
-                className="p-2 text-gray-600 hover:text-gray-900 lg:hidden"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setShowMenu(true)}
-              >
-                <Menu className="w-5 h-5" />
-              </motion.button>
+              {user ? (
+                <>
+                  {/* Notification Bell */}
+                  <div className="relative" ref={notificationRef}>
+                    <motion.button
+                      className="relative p-2 rounded-xl hover:bg-gray-50 transition-colors"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setShowNotifications(!showNotifications)}
+                    >
+                      <Bell className="w-6 h-6 text-gray-600" />
+                      {unreadCount > 0 && (
+                        <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
+                          {unreadCount > 9 ? '9+' : unreadCount}
+                        </span>
+                      )}
+                    </motion.button>
+
+                    {/* Notification Dropdown */}
+                    <AnimatePresence>
+                      {showNotifications && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                          transition={{ duration: 0.2 }}
+                          className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-200 py-2 max-h-96 overflow-hidden z-50"
+                        >
+                          {/* Header */}
+                          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                            <div className="flex items-center space-x-2">
+                              <h3 className="font-semibold text-gray-900">알림</h3>
+                              {unreadCount > 0 && (
+                                <span className="px-2 py-1 bg-red-100 text-red-600 text-xs rounded-full font-medium">
+                                  {unreadCount}개 안읽음
+                                </span>
+                              )}
+                            </div>
+                            {unreadCount > 0 && (
+                              <button
+                                onClick={markAllAsRead}
+                                className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                              >
+                                모두 읽음
+                              </button>
+                            )}
+                          </div>
+
+                          {/* Notification List */}
+                          <div className="max-h-80 overflow-y-auto">
+                            {notifications.length === 0 ? (
+                              <div className="text-center py-8">
+                                <Bell className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                                <p className="text-gray-500">새로운 알림이 없습니다.</p>
+                              </div>
+                            ) : (
+                              notifications.map((notification) => (
+                                <motion.div
+                                  key={notification.id}
+                                  className={`px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer border-l-4 ${
+                                    notification.read 
+                                      ? 'border-transparent bg-white' 
+                                      : 'border-blue-500 bg-blue-50'
+                                  }`}
+                                  whileHover={{ x: 2 }}
+                                  onClick={() => {
+                                    // 알림 클릭 시 해당 페이지로 이동하거나 상세 보기
+                                    console.log('Notification clicked:', notification.id);
+                                  }}
+                                >
+                                  <div className="flex items-start space-x-3">
+                                    <div className="flex-shrink-0 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-sm">
+                                      {notification.icon}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center justify-between">
+                                        <p className={`text-sm font-medium truncate ${
+                                          notification.read ? 'text-gray-700' : 'text-gray-900'
+                                        }`}>
+                                          {notification.title}
+                                        </p>
+                                        {!notification.read && (
+                                          <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 ml-2" />
+                                        )}
+                                      </div>
+                                      <p className={`text-sm mt-1 ${
+                                        notification.read ? 'text-gray-500' : 'text-gray-700'
+                                      }`}>
+                                        {notification.message}
+                                      </p>
+                                      <p className="text-xs text-gray-400 mt-1">
+                                        {formatTimeAgo(notification.timestamp)}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </motion.div>
+                              ))
+                            )}
+                          </div>
+
+                          {/* Footer */}
+                          {notifications.length > 0 && (
+                            <div className="border-t border-gray-100 px-4 py-3">
+                              <button
+                                onClick={() => {
+                                  navigate('/notifications');
+                                  setShowNotifications(false);
+                                }}
+                                className="w-full text-sm text-blue-600 hover:text-blue-700 font-medium text-center"
+                              >
+                                모든 알림 보기
+                              </button>
+                            </div>
+                          )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* User Menu */}
+                  <div className="relative" ref={userMenuRef}>
+                  <motion.button
+                    className="flex items-center p-2 rounded-xl hover:bg-gray-50 transition-colors"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setShowUserMenu(!showUserMenu)}
+                  >
+                    <div className="w-10 h-10 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full flex items-center justify-center">
+                      {getProviderIcon(user?.provider || '')}
+                    </div>
+                    <ChevronDownIcon className={`w-4 h-4 text-gray-400 transition-transform ml-2 ${showUserMenu ? 'rotate-180' : ''}`} />
+                  </motion.button>
+
+                  <AnimatePresence>
+                    {showUserMenu && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        transition={{ duration: 0.2 }}
+                        className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-lg border border-gray-200 py-2"
+                      >
+                        <div className="px-4 py-3 border-b border-gray-100">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full flex items-center justify-center">
+                              {getProviderIcon(user?.provider || '')}
+                            </div>
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">{user?.name}</div>
+                              <div className="text-xs text-gray-500">{user?.email}</div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <motion.button
+                          className="w-full flex items-center space-x-3 px-4 py-2 text-left text-gray-700 hover:bg-gray-50 transition-colors"
+                          whileHover={{ x: 4 }}
+                          onClick={() => {
+                            navigate('/dashboard');
+                            setShowUserMenu(false);
+                          }}
+                        >
+                          <BarChart3 className="w-4 h-4" />
+                          <span>대시보드로 이동</span>
+                        </motion.button>
+                        <motion.button
+                          className="w-full flex items-center space-x-3 px-4 py-2 text-left text-gray-700 hover:bg-gray-50 transition-colors"
+                          whileHover={{ x: 4 }}
+                          onClick={() => {
+                            navigate('/settings');
+                            setShowUserMenu(false);
+                          }}
+                        >
+                          <Settings className="w-4 h-4" />
+                          <span>설정</span>
+                        </motion.button>
+                        <motion.button
+                          className="w-full flex items-center space-x-3 px-4 py-2 text-left text-red-600 hover:bg-red-50 transition-colors"
+                          whileHover={{ x: 4 }}
+                          onClick={handleLogout}
+                        >
+                          <LogOut className="w-4 h-4" />
+                          <span>로그아웃</span>
+                        </motion.button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                  </div>
+                </>
+              ) : (
+                <motion.button
+                  className="bg-primary-600 text-white px-6 py-2 rounded-xl font-medium hover:bg-primary-700 transition-colors"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleLogin}
+                >
+                  로그인
+                </motion.button>
+              )}
             </div>
           </div>
         </div>
-
-        {/* Progress bar */}
-        <motion.div
-          className="h-0.5 bg-gradient-to-r from-primary-500 to-primary-600 origin-left"
-          style={{ scaleX }}
-        />
-      </motion.header>
-
-      {/* Fullscreen Menu */}
-      {showMenu && (
-        <motion.div
-          initial={{ x: '100%' }}
-          animate={{ x: 0 }}
-          exit={{ x: '100%' }}
-          transition={{ type: 'tween', duration: 0.5 }}
-          className="fixed inset-0 z-50 bg-white lg:bg-white/95 lg:backdrop-blur-xl"
-        >
-          <div className="flex flex-col h-full">
-            {/* Menu header */}
-            <div className="flex justify-end p-6">
-              <motion.button
-                className="p-2 text-gray-600 hover:text-gray-900"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setShowMenu(false)}
-              >
-                <X className="w-6 h-6" />
-              </motion.button>
-            </div>
-
-            {/* Menu content */}
-            <div className="flex-1 flex items-center justify-center">
-              <nav className="text-center space-y-8">
-                {navigationItems.map((item, index) => (
-                  <motion.button
-                    key={item.label}
-                    className="block text-4xl lg:text-6xl font-light text-gray-600 hover:text-primary-600 transition-colors"
-                    initial={{ opacity: 0, y: 50 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    whileHover={{ x: 20 }}
-                    onClick={() => {
-                      scrollToSection(index + 1);
-                      setShowMenu(false);
-                    }}
-                  >
-                    {item.label}
-                  </motion.button>
-                ))}
-              </nav>
-            </div>
-          </div>
-        </motion.div>
-      )}
+      </header>
 
       {/* Side Navigation Indicator */}
       <div className="fixed right-6 top-1/2 transform -translate-y-1/2 z-40 hidden lg:flex flex-col space-y-4">
@@ -308,7 +553,7 @@ const HomePage: React.FC = () => {
             style={{ scale: logoScale }}
             className="mb-8"
           >
-            <img src="/image/Logo.png" alt="우리.zip" className="w-48 h-48 mx-auto mb-8 drop-shadow-2xl" />
+            <img src="/image/Logo.png" alt="우리.zip" className="w-64 h-64 mx-auto mb-8 drop-shadow-2xl" />
           </motion.div>
 
           <motion.p 
@@ -324,7 +569,7 @@ const HomePage: React.FC = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8, duration: 0.8 }}
-            className="flex flex-col sm:flex-row gap-6 justify-center items-center"
+            className="flex justify-center items-center"
           >
             <motion.button
               className="group bg-primary-500 hover:bg-primary-600 text-white px-12 py-4 rounded-full text-lg font-medium transition-all duration-300 shadow-lg"
@@ -334,14 +579,6 @@ const HomePage: React.FC = () => {
             >
               시작하기
               <ArrowRight className="inline-block ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </motion.button>
-
-            <motion.button
-              className="border-2 border-primary-500 text-primary-600 px-12 py-4 rounded-full text-lg font-medium hover:bg-primary-50 transition-all duration-300"
-              whileHover={{ scale: 1.05, y: -2 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              더 알아보기
             </motion.button>
           </motion.div>
 
@@ -398,7 +635,7 @@ const HomePage: React.FC = () => {
       <footer className="py-16 border-t border-gray-200 bg-white">
         <div className="max-w-7xl mx-auto px-6 text-center">
           <div className="flex items-center justify-center mb-8">
-            <img src="/image/Logo.png" alt="우리.zip" className="w-12 h-12" />
+            <img src="/image/Logo.png" alt="우리.zip" className="w-16 h-16" />
           </div>
           <p className="text-gray-500">&copy; 2024 우리.zip. All rights reserved.</p>
         </div>

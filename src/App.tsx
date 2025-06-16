@@ -3,6 +3,7 @@ import { useAuthStore } from './store/authStore';
 import { VERSION, BUILD_TIME } from './version';
 import Layout from './components/layout/Layout';
 import ProtectedRoute from './components/common/ProtectedRoute';
+import ScrollToTop from './components/common/ScrollToTop';
 import LoginPage from './components/auth/LoginPage';
 import HomePage from './components/home/HomePage';
 import DashboardPage from './components/dashboard/DashboardPage';
@@ -11,12 +12,8 @@ import TasksPage from './components/tasks/TasksPage';
 import ExpensesPage from './components/expenses/ExpensesPage';
 import GamesPage from './components/games/GamesPage';
 import RoulettePage from './components/games/RoulettePage';
-import RockPaperScissorsPage from './components/games/RockPaperScissorsPage';
-import SlotMachine from './components/games/SlotMachine';
-import DicePage from './components/games/DicePage';
-import MemoryGamePage from './components/games/MemoryGamePage';
-import QuizGame from './components/games/QuizGame';
-import DartsGame from './components/games/DartsGame';
+import LadderGamePage from './components/games/LadderGamePage';
+import YahtzeeGame from './components/games/YahtzeeGame';
 import AIAssistantPage from './components/ai/AIAssistantPage';
 import CommunityPage from './components/community/CommunityPage';
 import SettingsPage from './components/settings/SettingsPage';
@@ -28,6 +25,7 @@ function App() {
 
   return (
     <Router>
+      <ScrollToTop />
       {/* Version indicator for debugging */}
       <div style={{
         position: 'fixed',
@@ -112,61 +110,21 @@ function App() {
           }
         />
         <Route
-          path="/games/rps"
+          path="/games/ladder"
           element={
             <ProtectedRoute>
               <Layout>
-                <RockPaperScissorsPage />
+                <LadderGamePage />
               </Layout>
             </ProtectedRoute>
           }
         />
         <Route
-          path="/games/slot"
+          path="/games/yatzy"
           element={
             <ProtectedRoute>
               <Layout>
-                <SlotMachine />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/games/dice"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <DicePage />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/games/memory"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <MemoryGamePage />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/games/quiz"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <QuizGame />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/games/darts"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <DartsGame />
+                <YahtzeeGame />
               </Layout>
             </ProtectedRoute>
           }

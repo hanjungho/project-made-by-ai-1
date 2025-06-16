@@ -54,6 +54,22 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({ expense, onClose }) => {
       return;
     }
 
+    // 그룹 모드에서 정산 방식별 검증
+    if (mode === 'group' && currentGroup) {
+      if (formData.splitType === 'custom') {
+        const totalSplit = Object.values(formData.splitData).reduce((sum, val) => sum + (Number(val) || 0), 0);
+        if (totalSplit !== formData.amount) {
+          toast.error('커스텀 분할 금액의 합계가 총 금액과 일치하지 않습니다.');
+          return;
+        }
+      } else if (formData.splitType === 'specific') {
+        if (Object.keys(formData.splitData).length === 0) {
+          toast.error('정산에 참여할 인원을 선택해주세요.');
+          return;
+        }
+      }
+    }
+
     if (!user) return;
 
     const expenseData: Expense = {
@@ -67,7 +83,7 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({ expense, onClose }) => {
       groupId: mode === 'group' && currentGroup ? currentGroup.id : undefined,
       userId: user.id,
       splitType: formData.splitType as any,
-      splitData: formData.splitData,
+      splitData: mode === 'group' ? formData.splitData : undefined,
     };
 
     if (expense) {
@@ -243,23 +259,142 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({ expense, onClose }) => {
 
           {/* Split Options (Group Mode Only) */}
           {mode === 'group' && currentGroup && (
-            <div>
-              <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
-                <Users className="w-4 h-4" />
-                <span>정산 방식</span>
-              </label>
-              <select
-                value={formData.splitType}
-                onChange={(e) => setFormData({ ...formData, splitType: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                {splitTypes.map((type) => (
-                  <option key={type.value} value={type.value}>
-                    {type.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <>
+              <div>
+                <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
+                  <Users className="w-4 h-4" />
+                  <span>정산 방식</span>
+                </label>
+                <select
+                  value={formData.splitType}
+                  onChange={(e) => setFormData({ ...formData, splitType: e.target.value, splitData: {} })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  {splitTypes.map((type) => (
+                    <option key={type.value} value={type.value}>
+                      {type.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Custom Split Settings */}
+              {formData.splitType === 'custom' && (
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="text-sm font-medium text-gray-700 mb-3">커스텀 분할 설정</h4>
+                  <div className="space-y-3">
+                    {currentGroup.members.map((member) => (
+                      <div key={member.id} className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">{member.name}</span>
+                        <input
+                          type="number"
+                          min="0"
+                          value={formData.splitData[member.id] || 0}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            splitData: {
+                              ...formData.splitData,
+                              [member.id]: Number(e.target.value)
+                            }
+                          })}
+                          className="w-24 px-2 py-1 border border-gray-300 rounded text-sm"
+                          placeholder="0"
+                        />
+                      </div>
+                    ))}
+                    <div className="border-t pt-3 mt-3">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="font-medium">합계:</span>
+                        <span className={`font-medium ${
+                          Object.values(formData.splitData).reduce((sum, val) => sum + (Number(val) || 0), 0) === formData.amount
+                            ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          {new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW' }).format(
+                            Object.values(formData.splitData).reduce((sum, val) => sum + (Number(val) || 0), 0)
+                          )}
+                        </span>
+                      </div>
+                      {Object.values(formData.splitData).reduce((sum, val) => sum + (Number(val) || 0), 0) !== formData.amount && (
+                        <p className="text-xs text-red-600 mt-1">
+                          분할 금액의 합계가 총 금액과 일치하지 않습니다.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Specific Split Settings */}
+              {formData.splitType === 'specific' && (
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="text-sm font-medium text-gray-700 mb-3">특정 인원 선택</h4>
+                  <div className="space-y-2">
+                    {currentGroup.members.map((member) => (
+                      <label key={member.id} className="flex items-center space-x-3">
+                        <input
+                          type="checkbox"
+                          checked={formData.splitData[member.id] !== undefined}
+                          onChange={(e) => {
+                            const newSplitData = { ...formData.splitData };
+                            if (e.target.checked) {
+                              newSplitData[member.id] = 0; // 일단 0으로 설정, 아래에서 균등분할로 계산
+                            } else {
+                              delete newSplitData[member.id];
+                            }
+                            
+                            // 선택된 인원으로 균등분할
+                            const selectedMembers = Object.keys(newSplitData);
+                            const amountPerPerson = selectedMembers.length > 0 ? Math.floor(formData.amount / selectedMembers.length) : 0;
+                            selectedMembers.forEach(memberId => {
+                              newSplitData[memberId] = amountPerPerson;
+                            });
+                            
+                            setFormData({
+                              ...formData,
+                              splitData: newSplitData
+                            });
+                          }}
+                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="text-sm text-gray-700">{member.name}</span>
+                        {formData.splitData[member.id] !== undefined && (
+                          <span className="text-sm text-blue-600 ml-auto">
+                            {new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW' }).format(
+                              formData.splitData[member.id] || 0
+                            )}
+                          </span>
+                        )}
+                      </label>
+                    ))}
+                    {Object.keys(formData.splitData).length > 0 && (
+                      <div className="border-t pt-3 mt-3">
+                        <div className="text-sm text-gray-600">
+                          선택된 인원: {Object.keys(formData.splitData).length}명 | 
+                          인당 금액: {new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW' }).format(
+                            Object.keys(formData.splitData).length > 0 ? Math.floor(formData.amount / Object.keys(formData.splitData).length) : 0
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Equal Split Info */}
+              {formData.splitType === 'equal' && (
+                <div className="bg-blue-50 rounded-lg p-4">
+                  <h4 className="text-sm font-medium text-blue-700 mb-2">균등 분할</h4>
+                  <p className="text-sm text-blue-600">
+                    총 {currentGroup.members.length}명이 균등하게 분담합니다.
+                  </p>
+                  <p className="text-sm text-blue-600 mt-1">
+                    인당 금액: {new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW' }).format(
+                      Math.floor(formData.amount / currentGroup.members.length)
+                    )}
+                  </p>
+                </div>
+              )}
+            </>
           )}
 
           {/* Buttons */}

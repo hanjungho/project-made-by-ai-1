@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
-  ArrowLeft, Heart, MessageCircle, Send, Clock,
-  Lightbulb, ChefHat, Sparkles, ShoppingCart, MessageSquare, HelpCircle, Star, FileText
+  ArrowLeft, Heart, MessageCircle, Send, Clock, Share2, Flag,
+  Users, Lightbulb, MessageSquare, HelpCircle, FileText
 } from 'lucide-react';
 import { Post, Comment } from '../../types';
 import { useAuthStore } from '../../store/authStore';
@@ -10,6 +10,7 @@ import { useAppStore } from '../../store/appStore';
 import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import toast from 'react-hot-toast';
+import ReportModal from './ReportModal';
 
 interface PostDetailProps {
   post: Post;
@@ -21,16 +22,25 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack }) => {
   const { updatePost } = useAppStore();
   const [newComment, setNewComment] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [reportModal, setReportModal] = useState<{
+    isOpen: boolean;
+    type: 'post' | 'comment';
+    targetId: string;
+    targetTitle?: string;
+  }>({
+    isOpen: false,
+    type: 'post',
+    targetId: '',
+    targetTitle: ''
+  });
 
   const getCategoryInfo = (category: string) => {
     const categories: Record<string, { name: string; icon: any; color: string }> = {
+      roommate: { name: '메이트 구하기', icon: Users, color: 'bg-blue-100 text-blue-800' },
       tip: { name: '생활팁', icon: Lightbulb, color: 'bg-yellow-100 text-yellow-800' },
-      recipe: { name: '레시피', icon: ChefHat, color: 'bg-orange-100 text-orange-800' },
-      cleaning: { name: '청소팁', icon: Sparkles, color: 'bg-green-100 text-green-800' },
-      shopping: { name: '쇼핑정보', icon: ShoppingCart, color: 'bg-blue-100 text-blue-800' },
       free: { name: '자유게시판', icon: MessageSquare, color: 'bg-purple-100 text-purple-800' },
       question: { name: '질문/답변', icon: HelpCircle, color: 'bg-red-100 text-red-800' },
-      review: { name: '후기/리뷰', icon: Star, color: 'bg-indigo-100 text-indigo-800' },
+      policy: { name: '정책', icon: FileText, color: 'bg-green-100 text-green-800' },
     };
     return categories[category] || { name: '기타', icon: FileText, color: 'bg-gray-100 text-gray-800' };
   };
@@ -47,8 +57,6 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack }) => {
         userId: user.id,
         author: user,
         createdAt: new Date(),
-        likes: 0,
-        likedBy: [],
       };
 
       const updatedComments = [...(post.comments || []), comment];
@@ -60,6 +68,57 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack }) => {
     } finally {
       setIsSubmittingComment(false);
     }
+  };
+
+  const handleShare = async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: post.title,
+          text: post.content.substring(0, 100) + '...',
+          url: window.location.href,
+        });
+      } else {
+        // 폴백: URL을 클립보드에 복사
+        await navigator.clipboard.writeText(window.location.href);
+        toast.success('링크가 클립보드에 복사되었습니다.');
+      }
+    } catch (error) {
+      // 클립보드 복사 시도
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        toast.success('링크가 클립보드에 복사되었습니다.');
+      } catch (clipboardError) {
+        toast.error('공유하기를 실행할 수 없습니다.');
+      }
+    }
+  };
+
+  const handleReportPost = () => {
+    setReportModal({
+      isOpen: true,
+      type: 'post',
+      targetId: post.id,
+      targetTitle: post.title
+    });
+  };
+
+  const handleReportComment = (commentId: string) => {
+    setReportModal({
+      isOpen: true,
+      type: 'comment',
+      targetId: commentId,
+      targetTitle: `${post.title}의 댓글`
+    });
+  };
+
+  const closeReportModal = () => {
+    setReportModal({
+      isOpen: false,
+      type: 'post',
+      targetId: '',
+      targetTitle: ''
+    });
   };
 
   return (
@@ -106,15 +165,17 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack }) => {
               </div>
             </div>
           </div>
-          {(() => {
-            const categoryInfo = getCategoryInfo(post.category);
-            return (
-              <div className={`flex items-center space-x-1 px-3 py-1 rounded-full text-xs font-medium ${categoryInfo.color}`}>
-                <categoryInfo.icon className="w-3 h-3" />
-                <span>{categoryInfo.name}</span>
-              </div>
-            );
-          })()}
+          <div className="flex items-center space-x-2">
+            {(() => {
+              const categoryInfo = getCategoryInfo(post.category);
+              return (
+                <div className={`flex items-center space-x-1 px-3 py-1 rounded-full text-xs font-medium ${categoryInfo.color}`}>
+                  <categoryInfo.icon className="w-3 h-3" />
+                  <span>{categoryInfo.name}</span>
+                </div>
+              );
+            })()}
+          </div>
         </div>
 
         <p className="text-gray-700 leading-relaxed whitespace-pre-wrap mb-6">
@@ -136,14 +197,38 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack }) => {
         )}
 
         {/* 액션 버튼들 */}
-        <div className="flex items-center space-x-6 pt-4 border-t border-gray-100">
-          <div className="flex items-center space-x-2 text-gray-500">
-            <Heart className="w-5 h-5" />
-            <span>{post.likes || 0}</span>
+        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+          <div className="flex items-center space-x-6">
+            <div className="flex items-center space-x-2 text-gray-500">
+              <Heart className="w-5 h-5" />
+              <span>{post.likes || 0}</span>
+            </div>
+            <div className="flex items-center space-x-2 text-gray-500">
+              <MessageCircle className="w-5 h-5" />
+              <span>{post.comments?.length || 0}</span>
+            </div>
           </div>
-          <div className="flex items-center space-x-2 text-gray-500">
-            <MessageCircle className="w-5 h-5" />
-            <span>{post.comments?.length || 0}</span>
+          
+          <div className="flex items-center space-x-2">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleShare}
+              className="flex items-center space-x-1 px-3 py-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+            >
+              <Share2 className="w-4 h-4" />
+              <span className="text-sm">공유</span>
+            </motion.button>
+            
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleReportPost}
+              className="flex items-center space-x-1 px-3 py-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+            >
+              <Flag className="w-4 h-4" />
+              <span className="text-sm">신고</span>
+            </motion.button>
           </div>
         </div>
       </motion.article>
@@ -221,26 +306,28 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack }) => {
                     </span>
                   </div>
                   <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <span className="font-medium text-gray-900 text-sm">
-                        {comment.author?.name || '익명'}
-                      </span>
-                      <span className="text-xs text-gray-500">
-                        {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true, locale: ko })}
-                      </span>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center space-x-2">
+                        <span className="font-medium text-gray-900 text-sm">
+                          {comment.author?.name || '익명'}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true, locale: ko })}
+                        </span>
+                      </div>
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => handleReportComment(comment.id)}
+                        className="flex items-center space-x-1 px-2 py-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                      >
+                        <Flag className="w-3 h-3" />
+                        <span className="text-xs">신고</span>
+                      </motion.button>
                     </div>
-                    <p className="text-gray-700 text-sm leading-relaxed mb-3">
+                    <p className="text-gray-700 text-sm leading-relaxed">
                       {comment.content}
                     </p>
-                    <div className="flex items-center space-x-4">
-                      <button className="flex items-center space-x-1 text-xs text-gray-500 hover:text-red-500 transition-colors">
-                        <Heart className="w-4 h-4" />
-                        <span>{comment.likes || 0}</span>
-                      </button>
-                      <button className="text-xs text-gray-500 hover:text-gray-700 transition-colors">
-                        답글
-                      </button>
-                    </div>
                   </div>
                 </motion.div>
               ))
@@ -252,6 +339,15 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack }) => {
           )}
         </div>
       </motion.div>
+
+      {/* 신고 모달 */}
+      <ReportModal
+        isOpen={reportModal.isOpen}
+        onClose={closeReportModal}
+        type={reportModal.type}
+        targetId={reportModal.targetId}
+        targetTitle={reportModal.targetTitle}
+      />
     </div>
   );
 };

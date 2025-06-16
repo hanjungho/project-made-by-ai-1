@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Plus, Search, Filter, TrendingUp, MessageCircle, Heart, Share2, Bookmark,
-  Lightbulb, ChefHat, Sparkles, ShoppingCart, MessageSquare, HelpCircle, Star, Clock
+  Users, Lightbulb, MessageSquare, HelpCircle, FileText, Clock, ThumbsUp
 } from 'lucide-react';
 import { useAppStore } from '../../store/appStore';
 import { useAuthStore } from '../../store/authStore';
@@ -18,34 +18,40 @@ const CommunityPage: React.FC = () => {
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<'latest' | 'popular' | 'trending'>('latest');
+  const [sortBy, setSortBy] = useState<'latest' | 'likes' | 'comments'>('latest');
+  const [filterBy, setFilterBy] = useState<'all' | 'bookmarked' | 'liked'>('all');
 
   const categories = [
     { id: 'all', name: '전체', icon: Filter, color: 'text-gray-600' },
+    { id: 'roommate', name: '메이트 구하기', icon: Users, color: 'text-blue-600' },
     { id: 'tip', name: '생활팁', icon: Lightbulb, color: 'text-yellow-600' },
-    { id: 'recipe', name: '레시피', icon: ChefHat, color: 'text-orange-600' },
-    { id: 'cleaning', name: '청소팁', icon: Sparkles, color: 'text-green-600' },
-    { id: 'shopping', name: '쇼핑정보', icon: ShoppingCart, color: 'text-blue-600' },
     { id: 'free', name: '자유게시판', icon: MessageSquare, color: 'text-purple-600' },
     { id: 'question', name: '질문/답변', icon: HelpCircle, color: 'text-red-600' },
-    { id: 'review', name: '후기/리뷰', icon: Star, color: 'text-indigo-600' },
+    { id: 'policy', name: '정책', icon: FileText, color: 'text-green-600' },
   ];
 
-  // 필터링된 게시글 - 모드 구분 없이 모든 게시글 표시
+  // 필터링된 게시글
   const filteredPosts = posts.filter(post => {
     const matchesSearch = post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          post.content.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || post.category === selectedCategory;
     
-    return matchesSearch && matchesCategory;
+    let matchesFilter = true;
+    if (filterBy === 'bookmarked') {
+      matchesFilter = post.bookmarkedBy?.includes(user?.id || '') || false;
+    } else if (filterBy === 'liked') {
+      matchesFilter = post.likedBy?.includes(user?.id || '') || false;
+    }
+    
+    return matchesSearch && matchesCategory && matchesFilter;
   });
 
   // 정렬된 게시글
   const sortedPosts = [...filteredPosts].sort((a, b) => {
     switch (sortBy) {
-      case 'popular':
+      case 'likes':
         return (b.likes || 0) - (a.likes || 0);
-      case 'trending':
+      case 'comments':
         return (b.comments?.length || 0) - (a.comments?.length || 0);
       case 'latest':
       default:
@@ -68,24 +74,27 @@ const CommunityPage: React.FC = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-3xl p-8 text-white"
+        className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-2xl p-6 text-white"
       >
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">커뮤니티</h1>
-            <p className="text-purple-100">
-              다양한 생활 정보를 공유하고 소통해보세요!
-            </p>
+          <div className="flex items-center space-x-4">
+            <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+              <MessageSquare className="w-6 h-6" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold">커뮤니티</h1>
+              <p className="text-primary-100">
+                다양한 생활 정보를 공유하고 소통해보세요!
+              </p>
+            </div>
           </div>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+          <button
             onClick={() => setIsCreateModalOpen(true)}
-            className="flex items-center space-x-2 bg-white text-primary-600 px-6 py-3 rounded-xl font-medium hover:bg-gray-50 transition-colors"
+            className="flex items-center space-x-2 bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-xl transition-colors"
           >
             <Plus className="w-5 h-5" />
-            <span>글쓰기</span>
-          </motion.button>
+            <span className="font-medium">글쓰기</span>
+          </button>
         </div>
       </motion.div>
 
@@ -108,30 +117,6 @@ const CommunityPage: React.FC = () => {
               className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             />
           </div>
-
-          {/* 정렬 옵션 */}
-          <div className="flex items-center space-x-3">
-            <div className="flex items-center space-x-2 bg-gray-50 rounded-xl p-1">
-              {[
-                { key: 'latest', label: '최신순', icon: Clock },
-                { key: 'popular', label: '인기순', icon: TrendingUp },
-                { key: 'trending', label: '댓글순', icon: MessageCircle },
-              ].map((option) => (
-                <button
-                  key={option.key}
-                  onClick={() => setSortBy(option.key as any)}
-                  className={`flex items-center space-x-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    sortBy === option.key
-                      ? 'bg-white text-purple-600 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-800'
-                  }`}
-                >
-                  <option.icon className="w-4 h-4" />
-                  <span>{option.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
 
         {/* 카테고리 필터 */}
@@ -153,60 +138,70 @@ const CommunityPage: React.FC = () => {
         </div>
       </motion.div>
 
-      {/* 통계 정보 */}
+      {/* 정렬 및 필터 옵션 */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+        transition={{ delay: 0.15 }}
+        className="flex justify-end items-center space-x-4"
       >
-        {[
-          { 
-            icon: MessageCircle, 
-            label: '전체 게시글', 
-            value: posts.length, 
-            color: 'text-blue-600 bg-blue-100' 
-          },
-          { 
-            icon: Heart, 
-            label: '총 좋아요', 
-            value: posts.reduce((sum, post) => sum + (post.likes || 0), 0), 
-            color: 'text-red-600 bg-red-100' 
-          },
-          { 
-            icon: TrendingUp, 
-            label: '오늘 게시글', 
-            value: posts.filter(post => 
-              new Date(post.createdAt).toDateString() === new Date().toDateString()
-            ).length, 
-            color: 'text-green-600 bg-green-100' 
-          },
-          { 
-            icon: Bookmark, 
-            label: '내가 쓴 글', 
-            value: posts.filter(post => post.userId === user?.id).length, 
-            color: 'text-purple-600 bg-purple-100' 
-          },
-        ].map((stat, index) => (
-          <div key={index} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500 mb-1">{stat.label}</p>
-                <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-              </div>
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${stat.color}`}>
-                <stat.icon className="w-6 h-6" />
-              </div>
-            </div>
-          </div>
-        ))}
+        {/* 필터 옵션 */}
+        <div className="flex items-center space-x-2">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setFilterBy(filterBy === 'bookmarked' ? 'all' : 'bookmarked')}
+            className={`p-2 rounded-lg transition-colors ${
+              filterBy === 'bookmarked'
+                ? 'bg-blue-100 text-blue-700 border border-blue-300'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            <Bookmark className={`w-5 h-5 ${filterBy === 'bookmarked' ? 'fill-current' : ''}`} />
+          </motion.button>
+
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setFilterBy(filterBy === 'liked' ? 'all' : 'liked')}
+            className={`p-2 rounded-lg transition-colors ${
+              filterBy === 'liked'
+                ? 'bg-red-100 text-red-700 border border-red-300'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            <Heart className={`w-5 h-5 ${filterBy === 'liked' ? 'fill-current' : ''}`} />
+          </motion.button>
+        </div>
+
+        {/* 정렬 옵션 */}
+        <div className="flex items-center space-x-2 bg-gray-50 rounded-xl p-1">
+          {[
+            { key: 'latest', label: '최신순', icon: Clock },
+            { key: 'likes', label: '좋아요순', icon: ThumbsUp },
+            { key: 'comments', label: '댓글순', icon: MessageCircle },
+          ].map((option) => (
+            <button
+              key={option.key}
+              onClick={() => setSortBy(option.key as any)}
+              className={`flex items-center space-x-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                sortBy === option.key
+                  ? 'bg-white text-purple-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-800'
+              }`}
+            >
+              <option.icon className="w-4 h-4" />
+              <span>{option.label}</span>
+            </button>
+          ))}
+        </div>
       </motion.div>
 
       {/* 게시글 목록 */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
+        transition={{ delay: 0.2 }}
         className="space-y-4"
       >
         {sortedPosts.length === 0 ? (
@@ -216,7 +211,7 @@ const CommunityPage: React.FC = () => {
             </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">게시글이 없습니다</h3>
             <p className="text-gray-500 mb-6">
-              {searchQuery || selectedCategory !== 'all' 
+              {searchQuery || selectedCategory !== 'all' || filterBy !== 'all'
                 ? '검색 조건에 맞는 게시글을 찾을 수 없습니다.' 
                 : '첫 번째 게시글을 작성해보세요!'
               }

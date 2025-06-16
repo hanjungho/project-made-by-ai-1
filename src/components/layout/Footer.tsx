@@ -60,7 +60,7 @@ const Footer: React.FC = () => {
               transition={{ duration: 0.6 }}
             >
               <div className="flex items-center space-x-3 mb-6">
-                <img src="/image/Logo.png" alt="우리.zip" className="w-12 h-12" />
+                <img src="/image/Logo.png" alt="우리.zip" className="w-16 h-16" />
               </div>
               <p className="text-gray-600 mb-6 leading-relaxed">
                 하우스메이트와 함께하는 스마트한 공동생활 관리 플랫폼. 

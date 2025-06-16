@@ -1,61 +1,173 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Settings, User, Bell, Shield, Palette, Globe, Moon, Sun, Monitor, Save, ChevronRight } from 'lucide-react';
+import { Settings, User, Bell, Save, Camera, Trash2, Upload } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useAppStore } from '../../store/appStore';
+import toast from 'react-hot-toast';
 
 const SettingsPage: React.FC = () => {
   const { user } = useAuthStore();
   const { mode } = useAppStore();
   const [activeTab, setActiveTab] = useState('profile');
+  const [profileData, setProfileData] = useState({
+    name: user?.name || '',
+    nickname: user?.name || '',
+    avatar: user?.avatar || ''
+  });
   const [notifications, setNotifications] = useState({
+    expenses: true,
     tasks: true,
     events: true,
-    expenses: false,
-    community: true,
   });
-  const [theme, setTheme] = useState('system');
-  const [language, setLanguage] = useState('ko');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const tabs = [
-    { id: 'profile', label: '프로필', icon: User },
+    { id: 'profile', label: '프로필 정보', icon: User },
     { id: 'notifications', label: '알림', icon: Bell },
-    { id: 'privacy', label: '개인정보', icon: Shield },
-    { id: 'appearance', label: '모양', icon: Palette },
-    { id: 'general', label: '일반', icon: Settings },
   ];
+
+  const handleProfileChange = (field: string, value: string) => {
+    setProfileData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleAvatarUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setProfileData(prev => ({ ...prev, avatar: result }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleDeleteAccount = () => {
+    if (showDeleteConfirm) {
+      // 실제 계정 삭제 로직
+      toast.success('계정이 삭제되었습니다.');
+      // 로그아웃 처리 등
+    } else {
+      setShowDeleteConfirm(true);
+      setTimeout(() => setShowDeleteConfirm(false), 5000); // 5초 후 자동으로 확인 상태 해제
+    }
+  };
+
+  const handleSave = () => {
+    // 설정 저장 로직
+    toast.success('설정이 저장되었습니다.');
+  };
 
   const renderProfileSettings = () => (
     <div className="space-y-6">
       <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
-        <h3 className="text-xl font-bold text-gray-900 mb-6">프로필 정보</h3>
+        <h3 className="text-xl font-bold text-gray-900 mb-6">개인정보 수정</h3>
+        
+        {/* 프로필 사진 */}
         <div className="flex items-center space-x-6 mb-6">
-          <div className="w-20 h-20 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full flex items-center justify-center">
-            <span className="text-2xl font-bold text-white">{user?.name?.[0]}</span>
+          <div className="relative">
+            <div className="w-24 h-24 rounded-full overflow-hidden bg-gradient-to-r from-primary-500 to-primary-600 flex items-center justify-center">
+              {profileData.avatar ? (
+                <img 
+                  src={profileData.avatar} 
+                  alt="프로필" 
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="text-2xl font-bold text-white">
+                  {profileData.name?.[0] || 'U'}
+                </span>
+              )}
+            </div>
+            <label className="absolute bottom-0 right-0 w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center cursor-pointer hover:bg-primary-700 transition-colors">
+              <Camera className="w-4 h-4 text-white" />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarUpload}
+                className="hidden"
+              />
+            </label>
           </div>
           <div>
-            <h4 className="text-xl font-semibold text-gray-900">{user?.name}</h4>
-            <p className="text-gray-600">{user?.email}</p>
-            <p className="text-sm text-gray-500 capitalize">{user?.provider} 계정</p>
+            <h4 className="text-lg font-semibold text-gray-900">프로필 사진</h4>
+            <p className="text-sm text-gray-600">JPG, PNG 파일을 업로드할 수 있습니다</p>
+            <button
+              onClick={() => setProfileData(prev => ({ ...prev, avatar: '' }))}
+              className="text-sm text-red-600 hover:text-red-700 mt-1"
+            >
+              사진 제거
+            </button>
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        {/* 개인정보 입력 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">이름</label>
             <input
               type="text"
-              defaultValue={user?.name}
-              className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              value={profileData.name}
+              onChange={(e) => handleProfileChange('name', e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              placeholder="실명을 입력하세요"
             />
           </div>
           <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">닉네임</label>
+            <input
+              type="text"
+              value={profileData.nickname}
+              onChange={(e) => handleProfileChange('nickname', e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              placeholder="사용할 닉네임을 입력하세요"
+            />
+          </div>
+          <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-2">이메일</label>
             <input
               type="email"
-              defaultValue={user?.email}
+              value={user?.email || ''}
               disabled
-              className="w-full px-4 py-2 border border-gray-300 rounded-xl bg-gray-50 text-gray-500"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 text-gray-500"
             />
+            <p className="text-xs text-gray-500 mt-1">이메일은 변경할 수 없습니다</p>
+          </div>
+        </div>
+      </div>
+
+      {/* 계정 삭제 */}
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+        <h3 className="text-xl font-bold text-gray-900 mb-4">계정 관리</h3>
+        <div className="p-4 bg-red-50 rounded-xl border border-red-200">
+          <div className="flex items-start justify-between">
+            <div>
+              <h4 className="font-medium text-red-900 mb-1">계정 삭제</h4>
+              <p className="text-sm text-red-700 mb-4">
+                계정을 삭제하면 모든 데이터가 영구적으로 삭제되며 복구할 수 없습니다.
+                이 작업은 되돌릴 수 없습니다.
+              </p>
+              <motion.button
+                onClick={handleDeleteAccount}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+                  showDeleteConfirm
+                    ? 'bg-red-600 text-white hover:bg-red-700'
+                    : 'bg-red-100 text-red-700 hover:bg-red-200'
+                }`}
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>
+                  {showDeleteConfirm ? '정말로 삭제하시겠습니까?' : '계정 삭제'}
+                </span>
+              </motion.button>
+              {showDeleteConfirm && (
+                <p className="text-xs text-red-600 mt-2">
+                  5초 내에 다시 클릭하면 계정이 삭제됩니다.
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -68,22 +180,28 @@ const SettingsPage: React.FC = () => {
         <h3 className="text-xl font-bold text-gray-900 mb-6">알림 설정</h3>
         <div className="space-y-4">
           {Object.entries(notifications).map(([key, value]) => {
-            const labels = {
-              tasks: '할일 알림',
-              events: '일정 알림',
-              expenses: '지출 알림',
-              community: '커뮤니티 알림'
+            const settings = {
+              expenses: {
+                label: '지출 정산 알림',
+                description: '지출 정산 요청이나 완료 시 알림을 받습니다'
+              },
+              tasks: {
+                label: '할일 알림',
+                description: '새로운 할일이나 마감일 알림을 받습니다'
+              },
+              events: {
+                label: '일정 알림',
+                description: '일정 시작 15분 전에 알림을 받습니다'
+              }
             };
+            
+            const setting = settings[key as keyof typeof settings];
+            
             return (
               <div key={key} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                 <div>
-                  <h4 className="font-medium text-gray-900">{labels[key as keyof typeof labels]}</h4>
-                  <p className="text-sm text-gray-600">
-                    {key === 'tasks' && '새로운 할일이나 마감일 알림'}
-                    {key === 'events' && '일정 시작 전 알림'}
-                    {key === 'expenses' && '지출 한도 초과 알림'}
-                    {key === 'community' && '새 게시글이나 댓글 알림'}
-                  </p>
+                  <h4 className="font-medium text-gray-900">{setting.label}</h4>
+                  <p className="text-sm text-gray-600">{setting.description}</p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input
@@ -98,110 +216,28 @@ const SettingsPage: React.FC = () => {
             );
           })}
         </div>
-      </div>
-    </div>
-  );
-
-  const renderPrivacySettings = () => (
-    <div className="space-y-6">
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
-        <h3 className="text-xl font-bold text-gray-900 mb-6">개인정보 보호</h3>
-        <div className="space-y-4">
-          <div className="p-4 bg-gray-50 rounded-xl">
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="font-medium text-gray-900">프로필 공개</h4>
-                <p className="text-sm text-gray-600">다른 사용자가 내 프로필을 볼 수 있습니다</p>
-              </div>
-              <ChevronRight className="w-5 h-5 text-gray-400" />
-            </div>
-          </div>
-          <div className="p-4 bg-gray-50 rounded-xl">
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="font-medium text-gray-900">활동 기록</h4>
-                <p className="text-sm text-gray-600">내 활동을 기록하고 분석에 사용합니다</p>
-              </div>
-              <ChevronRight className="w-5 h-5 text-gray-400" />
-            </div>
-          </div>
-          <div className="p-4 bg-red-50 rounded-xl border border-red-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="font-medium text-red-900">계정 삭제</h4>
-                <p className="text-sm text-red-600">계정과 모든 데이터를 영구적으로 삭제합니다</p>
-              </div>
-              <ChevronRight className="w-5 h-5 text-red-400" />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderAppearanceSettings = () => (
-    <div className="space-y-6">
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
-        <h3 className="text-xl font-bold text-gray-900 mb-6">테마 설정</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[
-            { id: 'light', label: '라이트', icon: Sun },
-            { id: 'dark', label: '다크', icon: Moon },
-            { id: 'system', label: '시스템', icon: Monitor }
-          ].map((themeOption) => (
-            <div
-              key={themeOption.id}
-              className={`p-4 border-2 rounded-xl cursor-pointer transition-all ${
-                theme === themeOption.id
-                  ? 'border-primary-500 bg-primary-50'
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
-              onClick={() => setTheme(themeOption.id)}
-            >
-              <div className="flex flex-col items-center space-y-2">
-                <themeOption.icon className={`w-8 h-8 ${
-                  theme === themeOption.id ? 'text-primary-600' : 'text-gray-400'
-                }`} />
-                <span className={`font-medium ${
-                  theme === themeOption.id ? 'text-primary-900' : 'text-gray-700'
-                }`}>
-                  {themeOption.label}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderGeneralSettings = () => (
-    <div className="space-y-6">
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
-        <h3 className="text-xl font-bold text-gray-900 mb-6">일반 설정</h3>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">언어</label>
-            <select
-              value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            >
-              <option value="ko">한국어</option>
-              <option value="en">English</option>
-              <option value="ja">日本語</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">시작 페이지</label>
-            <select
-              className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            >
-              <option value="dashboard">대시보드</option>
-              <option value="calendar">캘린더</option>
-              <option value="tasks">할일</option>
-            </select>
-          </div>
+        
+        <div className="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
+          <h4 className="font-medium text-blue-900 mb-2">알림 권한 설정</h4>
+          <p className="text-sm text-blue-700 mb-3">
+            브라우저에서 알림을 받으려면 알림 권한을 허용해야 합니다.
+          </p>
+          <button
+            onClick={() => {
+              if ('Notification' in window) {
+                Notification.requestPermission().then(permission => {
+                  if (permission === 'granted') {
+                    toast.success('알림 권한이 허용되었습니다.');
+                  } else {
+                    toast.error('알림 권한이 거부되었습니다.');
+                  }
+                });
+              }
+            }}
+            className="text-sm bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            알림 권한 요청
+          </button>
         </div>
       </div>
     </div>
@@ -213,12 +249,6 @@ const SettingsPage: React.FC = () => {
         return renderProfileSettings();
       case 'notifications':
         return renderNotificationSettings();
-      case 'privacy':
-        return renderPrivacySettings();
-      case 'appearance':
-        return renderAppearanceSettings();
-      case 'general':
-        return renderGeneralSettings();
       default:
         return renderProfileSettings();
     }
@@ -239,12 +269,12 @@ const SettingsPage: React.FC = () => {
           </div>
           <div>
             <h1 className="text-3xl font-bold">설정</h1>
-            <p className="text-primary-100">계정 및 앱 설정을 관리하세요</p>
+            <p className="text-primary-100">계정 및 알림 설정을 관리하세요</p>
           </div>
         </div>
       </motion.div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 relative">
         {/* Sidebar */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
@@ -277,14 +307,15 @@ const SettingsPage: React.FC = () => {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="lg:col-span-3"
+          className="lg:col-span-3 relative"
         >
           {renderContent()}
           
-          {/* Save Button */}
-          <div className="mt-8">
+          {/* Save Button - 설정 영역 내 우측 하단 */}
+          <div className="flex justify-end mt-8">
             <motion.button
-              className="flex items-center space-x-2 px-8 py-3 bg-primary-600 text-white rounded-xl font-medium hover:bg-primary-700 transition-colors shadow-lg"
+              onClick={handleSave}
+              className="flex items-center space-x-3 px-6 py-3 bg-primary-600 text-white rounded-xl font-medium hover:bg-primary-700 transition-colors shadow-lg"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >

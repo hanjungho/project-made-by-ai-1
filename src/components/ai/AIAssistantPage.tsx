@@ -1,36 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Send, Bot, User, ThumbsUp, ThumbsDown, Copy } from 'lucide-react';
-// import { useAuthStore } from '../../store/authStore'; // Commented out as it's not used
+import toast from 'react-hot-toast';
 
 interface Message {
   id: string;
   type: 'user' | 'ai';
   content: string;
   timestamp: Date;
+  rating?: 'up' | 'down' | null;
 }
 
 const AIAssistantPage: React.FC = () => {
-  // const { user } = useAuthStore(); // Commented out as it's not used
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
       type: 'ai',
       content: '안녕하세요! 저는 우리.zip AI 도우미입니다. 하우스메이트 생활에서 궁금한 것이 있으시면 언제든 물어보세요! 🏠✨',
       timestamp: new Date(),
+      rating: null,
     },
   ]);
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-
-  const quickQuestions = [
-    '청소 당번 어떻게 정할까?',
-    '생활비 어떻게 나눌까?',
-    '집안일 규칙 정해줘',
-    '이 상황 누구 잘못이야?',
-    '공과금 분담 방법 알려줘',
-    '냉장고 정리 규칙 만들어줘',
-  ];
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   const aiResponses = {
     '청소 당번 어떻게 정할까?': `청소 당번을 정하는 공정한 방법들을 제안드릴게요:
@@ -177,6 +172,22 @@ const AIAssistantPage: React.FC = () => {
 이 규칙들로 냉장고 분쟁을 예방할 수 있어요!`,
   };
 
+  // 메시지가 추가될 때만 자동 스크롤 (사용자가 보낸 메시지나 AI 응답일 때만)
+  useEffect(() => {
+    if (shouldAutoScroll) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages, shouldAutoScroll]);
+
+  // 스크롤 위치 감지해서 자동 스크롤 여부 결정
+  const handleScroll = () => {
+    if (messagesContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+      const isAtBottom = scrollHeight - scrollTop - clientHeight < 50;
+      setShouldAutoScroll(isAtBottom);
+    }
+  };
+
   const handleSendMessage = (content: string) => {
     if (!content.trim()) return;
 
@@ -190,6 +201,7 @@ const AIAssistantPage: React.FC = () => {
     setMessages(prev => [...prev, userMessage]);
     setInputMessage('');
     setIsTyping(true);
+    setShouldAutoScroll(true); // 새 메시지 전송 시 자동 스크롤 활성화
 
     // Simulate AI response
     setTimeout(() => {
@@ -208,62 +220,70 @@ const AIAssistantPage: React.FC = () => {
 
 이런 정보들이 있으면 맞춤형 해결책을 제안드릴 수 있답니다! 😊`,
         timestamp: new Date(),
+        rating: null,
       };
       setMessages(prev => [...prev, aiResponse]);
       setIsTyping(false);
     }, 1500);
   };
 
-  const handleQuickQuestion = (question: string) => {
-    handleSendMessage(question);
+  const handleRating = (messageId: string, rating: 'up' | 'down') => {
+    setMessages(prev => 
+      prev.map(msg => 
+        msg.id === messageId 
+          ? { ...msg, rating: msg.rating === rating ? null : rating }
+          : msg
+      )
+    );
+    // 평가 시에는 자동 스크롤하지 않음
+  };
+
+  const handleCopy = async (content: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      toast.success('메시지가 복사되었습니다!');
+    } catch (error) {
+      toast.error('복사에 실패했습니다.');
+    }
   };
 
   return (
-    <div className="h-[calc(100vh-200px)] flex flex-col">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-2xl p-6 text-white mb-6"
-      >
-        <div className="flex items-center space-x-4">
-          <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-            <Bot className="w-6 h-6" />
+    <div className="fixed inset-0 top-20 flex flex-col bg-gray-50 overflow-hidden">
+      <div className="flex-1 flex flex-col max-w-7xl mx-auto w-full px-6 lg:px-8 py-8">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-2xl p-6 text-white mb-6 flex-shrink-0"
+        >
+          <div className="flex items-center space-x-4">
+            <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+              <Bot className="w-6 h-6" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold">AI 판단 도우미</h1>
+              <p className="text-primary-100">하우스메이트 생활의 똑똑한 조언자</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold">AI 판단 도우미</h1>
-            <p className="text-primary-100">하우스메이트 생활의 똑똑한 조언자</p>
-          </div>
-        </div>
-      </motion.div>
+        </motion.div>
 
-      {/* Quick Questions */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.1 }}
-        className="mb-4"
-      >
-        <h3 className="text-sm font-medium text-gray-600 mb-3">빠른 질문</h3>
-        <div className="flex flex-wrap gap-2">
-          {quickQuestions.map((question, index) => (
-            <motion.button
-              key={index}
-              className="px-3 py-2 bg-white border border-gray-200 rounded-full text-sm text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-colors"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => handleQuickQuestion(question)}
-            >
-              {question}
-            </motion.button>
-          ))}
-        </div>
-      </motion.div>
-
-      {/* Chat Messages */}
-      <div className="flex-1 bg-white rounded-xl border border-gray-200 flex flex-col">
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {/* Chat Messages - 완전히 고정된 높이 */}
+        <div className="flex-1 bg-white rounded-xl border border-gray-200 flex flex-col overflow-hidden"
+             style={{ 
+               height: 'calc(100vh - 280px)',
+               maxHeight: 'calc(100vh - 280px)',
+               minHeight: 'calc(100vh - 280px)'
+             }}>
+          <div 
+            ref={messagesContainerRef}
+            onScroll={handleScroll}
+            className="flex-1 overflow-y-auto p-4 space-y-4"
+            style={{ 
+              height: 'calc(100% - 80px)',
+              maxHeight: 'calc(100% - 80px)'
+            }}
+          >
           {messages.map((message) => (
             <motion.div
               key={message.id}
@@ -276,7 +296,7 @@ const AIAssistantPage: React.FC = () => {
                 message.type === 'user' ? 'flex-row-reverse space-x-reverse' : ''
               }`}>
                 {/* Avatar */}
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                   message.type === 'user' 
                     ? 'bg-primary-600 text-white' 
                     : 'bg-gradient-to-r from-primary-500 to-primary-600 text-white'
@@ -294,7 +314,7 @@ const AIAssistantPage: React.FC = () => {
                     ? 'bg-primary-600 text-white'
                     : 'bg-gray-100 text-gray-800'
                 }`}>
-                  <div className="whitespace-pre-wrap text-sm leading-relaxed">
+                  <div className="whitespace-pre-wrap text-sm leading-relaxed break-words">
                     {message.content}
                   </div>
 
@@ -302,26 +322,45 @@ const AIAssistantPage: React.FC = () => {
                   {message.type === 'ai' && (
                     <div className="flex items-center space-x-2 mt-3 pt-2 border-t border-gray-200">
                       <motion.button
-                        className="p-1 rounded hover:bg-gray-200 transition-colors"
+                        className={`p-1 rounded transition-colors ${
+                          message.rating === 'up' 
+                            ? 'bg-green-500 text-white' 
+                            : 'hover:bg-gray-200 text-gray-500'
+                        }`}
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRating(message.id, 'up');
+                        }}
                       >
-                        <ThumbsUp className="w-3 h-3 text-gray-500" />
+                        <ThumbsUp className="w-3 h-3" />
                       </motion.button>
                       <motion.button
-                        className="p-1 rounded hover:bg-gray-200 transition-colors"
+                        className={`p-1 rounded transition-colors ${
+                          message.rating === 'down' 
+                            ? 'bg-red-500 text-white' 
+                            : 'hover:bg-gray-200 text-gray-500'
+                        }`}
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRating(message.id, 'down');
+                        }}
                       >
-                        <ThumbsDown className="w-3 h-3 text-gray-500" />
+                        <ThumbsDown className="w-3 h-3" />
                       </motion.button>
                       <motion.button
-                        className="p-1 rounded hover:bg-gray-200 transition-colors"
+                        className="p-1 rounded hover:bg-gray-200 transition-colors text-gray-500"
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
-                        onClick={() => navigator.clipboard.writeText(message.content)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCopy(message.content);
+                        }}
                       >
-                        <Copy className="w-3 h-3 text-gray-500" />
+                        <Copy className="w-3 h-3" />
                       </motion.button>
                     </div>
                   )}
@@ -351,10 +390,13 @@ const AIAssistantPage: React.FC = () => {
               </div>
             </motion.div>
           )}
+          
+          {/* 스크롤을 위한 참조점 */}
+          <div ref={messagesEndRef} />
         </div>
 
         {/* Input Area */}
-        <div className="border-t border-gray-200 p-4">
+        <div className="border-t border-gray-200 p-4 flex-shrink-0" style={{ height: '80px' }}>
           <div className="flex items-center space-x-3">
             <input
               type="text"
@@ -376,6 +418,7 @@ const AIAssistantPage: React.FC = () => {
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 };

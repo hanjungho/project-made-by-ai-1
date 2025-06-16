@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { X, Calendar, User, Flag, Camera } from 'lucide-react';
+import { X, Calendar, User, Flag } from 'lucide-react';
 import { useAppStore } from '../../store/appStore';
 import { useAuthStore } from '../../store/authStore';
 import { Task } from '../../types';
@@ -21,7 +21,6 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, onClose }) => {
     dueDate: task?.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '',
     priority: task?.priority || 'medium',
     assignedTo: task?.assignedTo || '',
-    proofImage: task?.proofImage || '',
   });
 
   const priorityOptions = [
@@ -51,7 +50,6 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, onClose }) => {
       groupId: mode === 'group' && currentGroup ? currentGroup.id : undefined,
       userId: user.id,
       category: mode === 'group' ? 'group' : 'personal',
-      proofImage: formData.proofImage || undefined,
       createdAt: task?.createdAt || new Date(),
     };
 
@@ -191,39 +189,6 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, onClose }) => {
               </select>
             </div>
           )}
-
-          {/* Proof Image */}
-          <div>
-            <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
-              <Camera className="w-4 h-4" />
-              <span>인증 이미지</span>
-            </label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  // In a real app, you would upload this to a server
-                  const reader = new FileReader();
-                  reader.onload = (e) => {
-                    setFormData({ ...formData, proofImage: e.target?.result as string });
-                  };
-                  reader.readAsDataURL(file);
-                }
-              }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-            {formData.proofImage && (
-              <div className="mt-2">
-                <img
-                  src={formData.proofImage}
-                  alt="Proof"
-                  className="w-full h-32 object-cover rounded-lg"
-                />
-              </div>
-            )}
-          </div>
 
           {/* Buttons */}
           <div className="flex space-x-3 pt-4">

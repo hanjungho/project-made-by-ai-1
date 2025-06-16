@@ -71,7 +71,7 @@ const LoginPage: React.FC = () => {
           className="text-center lg:text-left"
         >
           <div className="flex items-center justify-center lg:justify-start mb-8">
-            <img src="/image/Logo.png" alt="우리.zip" className="w-24 h-24" />
+            <img src="/image/Logo.png" alt="우리.zip" className="w-32 h-32" />
           </div>
           
           <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6 leading-tight">

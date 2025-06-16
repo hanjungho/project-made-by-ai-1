@@ -10,11 +10,11 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header />
-      <main className="pb-20 lg:pb-8">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
-          <div className="max-w-6xl mx-auto">
+      <main className="flex-1 pb-20 lg:pb-8">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8 h-full">
+          <div className="max-w-6xl mx-auto h-full">
             {children}
           </div>
         </div>

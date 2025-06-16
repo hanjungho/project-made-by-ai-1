@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, Hash, Send, MapPin,
-  Lightbulb, ChefHat, Sparkles, ShoppingCart, MessageSquare, HelpCircle, Star
+  Lightbulb, MessageSquare, HelpCircle, Star, Users
 } from 'lucide-react';
 import { useAppStore } from '../../store/appStore';
 import { useAuthStore } from '../../store/authStore';
@@ -24,13 +24,11 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const categories = [
+    { id: 'roommate', name: '메이트 구하기', icon: Users },
     { id: 'tip', name: '생활팁', icon: Lightbulb },
-    { id: 'recipe', name: '레시피', icon: ChefHat },
-    { id: 'cleaning', name: '청소팁', icon: Sparkles },
-    { id: 'shopping', name: '쇼핑정보', icon: ShoppingCart },
     { id: 'free', name: '자유게시판', icon: MessageSquare },
     { id: 'question', name: '질문/답변', icon: HelpCircle },
-    { id: 'review', name: '후기/리뷰', icon: Star },
+    { id: 'policy', name: '정책', icon: Star },
   ];
 
   const handleAddTag = () => {

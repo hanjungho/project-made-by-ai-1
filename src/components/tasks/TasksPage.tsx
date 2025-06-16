@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
-import { Plus, CheckCircle, Circle, Calendar, User, Image, Clock, Flag } from 'lucide-react';
+import { Plus, CheckCircle, Circle, Calendar, User, Clock, Flag } from 'lucide-react';
 import { useAppStore } from '../../store/appStore';
 import { Task } from '../../types';
 import TaskModal from './TaskModal';
@@ -10,7 +10,7 @@ import { ko } from 'date-fns/locale';
 import toast from 'react-hot-toast';
 
 const TasksPage: React.FC = () => {
-  const { tasks, toggleTask, mode, currentGroup, reorderTasks } = useAppStore();
+  const { tasks, toggleTask, mode, currentGroup, reorderTasks, joinedGroups } = useAppStore();
   // const { user } = useAuthStore(); // Commented out as it's not used
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -148,7 +148,7 @@ const TasksPage: React.FC = () => {
 
           {/* Add Task Button */}
           <motion.button
-            className="flex items-center space-x-2 px-6 py-3 bg-primary-600 text-white rounded-xl font-medium hover:bg-primary-700 transition-colors shadow-lg"
+            className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleAddTask}
@@ -237,9 +237,10 @@ const TasksPage: React.FC = () => {
                                     <Flag className="w-3 h-3 inline mr-1" />
                                     {getPriorityLabel(task.priority)}
                                   </span>
-                                  {task.category === 'group' && (
+                                  {/* 개인모드에서 그룹 할일인 경우 그룹명 표시 */}
+                                  {mode === 'personal' && task.groupId && (
                                     <span className="px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 border border-purple-200">
-                                      그룹
+                                      {joinedGroups.find(g => g.id === task.groupId)?.name || '그룹'}
                                     </span>
                                   )}
                                   {task.completed && (
@@ -278,12 +279,6 @@ const TasksPage: React.FC = () => {
                                     <span>
                                       {currentGroup.members.find(m => m.id === task.assignedTo)?.name || '알 수 없음'}
                                     </span>
-                                  </div>
-                                )}
-                                {task.proofImage && (
-                                  <div className="flex items-center space-x-1 text-green-600">
-                                    <Image className="w-4 h-4" />
-                                    <span>인증 완료</span>
                                   </div>
                                 )}
                                 <div className="flex items-center space-x-1">
