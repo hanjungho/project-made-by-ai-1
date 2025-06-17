@@ -14,6 +14,7 @@ interface AppState {
   expenses: Expense[];
   currentDate: Date;
   currentView: 'year' | 'month' | 'week' | 'day';
+  version?: number; // 버전 관리용
   
   // Actions
   setMode: (mode: AppMode) => void;
@@ -47,19 +48,22 @@ interface AppState {
 const generateId = () => Math.random().toString(36).substr(2, 9);
 const generateGroupCode = () => Math.random().toString(36).toUpperCase().substr(2, 6);
 
+// 현재 스토어 버전
+const STORE_VERSION = 2;
+
 // 임시 그룹 데이터
 const sampleGroups: Group[] = [
   {
     id: 'group1',
     name: '우리 가족',
     code: 'FAM123',
-    createdBy: 'user1',
+    createdBy: 'user1', // 현재 로그인한 사용자로 변경
     createdAt: new Date('2024-01-01'),
     members: [
+      { id: 'google_user_123', name: '김우리', email: 'woori@gmail.com' },
       { id: 'user1', name: '김아빠', email: 'dad@family.com' },
       { id: 'user2', name: '김엄마', email: 'mom@family.com' },
       { id: 'user3', name: '김딸', email: 'daughter@family.com' },
-      { id: 'google_user_123', name: '김우리', email: 'woori@gmail.com' },
     ]
   },
   {
@@ -87,6 +91,7 @@ export const useAppStore = create<AppState>()(
       expenses: [],
       currentDate: new Date(),
       currentView: 'month',
+      version: STORE_VERSION,
 
       setMode: (mode) => {
         set({ mode });
@@ -267,7 +272,7 @@ export const useAppStore = create<AppState>()(
       },
     }),
     {
-      name: 'app-storage',
+      name: 'app-storage-v2', // 키 이름 변경으로 강제 리셋
       partialize: (state) => ({
         mode: state.mode,
         currentGroup: state.currentGroup,
@@ -277,6 +282,7 @@ export const useAppStore = create<AppState>()(
         expenses: state.expenses,
         currentDate: state.currentDate,
         currentView: state.currentView,
+        version: state.version,
       }),
       // Date 객체 직렬화/역직렬화 처리
       serialize: (state) => {
@@ -285,6 +291,7 @@ export const useAppStore = create<AppState>()(
           state: {
             ...state.state,
             currentDate: state.state.currentDate?.toISOString(),
+            version: state.state.version,
             joinedGroups: state.state.joinedGroups?.map((group: Group) => ({
               ...group,
               createdAt: group.createdAt?.toISOString(),
@@ -310,6 +317,17 @@ export const useAppStore = create<AppState>()(
       },
       deserialize: (str) => {
         const parsed = JSON.parse(str);
+        
+        // 버전 체크 및 마이그레이션
+        const dataVersion = parsed.state.version || 1;
+        if (dataVersion < STORE_VERSION) {
+          console.log(`Migrating app store from version ${dataVersion} to ${STORE_VERSION}`);
+          // 새로운 샘플 그룹 데이터로 교체
+          parsed.state.joinedGroups = sampleGroups;
+          parsed.state.currentGroup = null; // 현재 그룹 초기화
+          parsed.state.version = STORE_VERSION;
+        }
+        
         return {
           ...parsed,
           state: {
@@ -318,7 +336,7 @@ export const useAppStore = create<AppState>()(
             joinedGroups: parsed.state.joinedGroups?.map((group: any) => ({
               ...group,
               createdAt: group.createdAt ? new Date(group.createdAt) : new Date(),
-            })) || [],
+            })) || sampleGroups, // 폴백으로 새 샘플 데이터 사용
             tasks: parsed.state.tasks?.map((task: any) => ({
               ...task,
               createdAt: task.createdAt ? new Date(task.createdAt) : new Date(),
@@ -334,6 +352,7 @@ export const useAppStore = create<AppState>()(
               createdAt: expense.createdAt ? new Date(expense.createdAt) : new Date(),
               date: expense.date ? new Date(expense.date) : new Date(),
             })) || [],
+            version: STORE_VERSION, // 항상 최신 버전으로 설정
           },
         };
       },
