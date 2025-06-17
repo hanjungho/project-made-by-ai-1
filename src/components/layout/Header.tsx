@@ -24,6 +24,9 @@ const Header: React.FC = () => {
   const notificationRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
+  // 로그인 상태 확인
+  const isAuthenticated = !!user;
+
   // 임시 알림 데이터
   const [notifications] = useState([
     {
@@ -153,7 +156,7 @@ const Header: React.FC = () => {
           <motion.div
             className="flex items-center cursor-pointer"
             whileHover={{ scale: 1.05 }}
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate(isAuthenticated ? '/dashboard' : '/')}
           >
             <img src="/image/Logo.png" alt="우리.zip" className="w-12 h-12 sm:w-16 sm:h-16" />
           </motion.div>
