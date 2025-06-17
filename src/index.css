@@ -2,6 +2,29 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 브라우저 확장 프로그램 간섭 방지 */
+* {
+  -webkit-user-select: inherit;
+  -moz-user-select: inherit;
+  -ms-user-select: inherit;
+  user-select: inherit;
+}
+
+/* 확장 프로그램 overlay 방지 */
+body {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* 확장 프로그램이 삽입하는 요소들 숨기기 */
+[class*="extension"], 
+[id*="extension"], 
+[class*="translate"], 
+[id*="translate"],
+div[style*="position: fixed"][style*="z-index"] {
+  display: none !important;
+}
+
 /* 3D Transform utilities */
 .preserve-3d {
   transform-style: preserve-3d;

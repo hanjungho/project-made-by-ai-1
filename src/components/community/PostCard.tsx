@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
-  Heart, MessageCircle, Share2, Bookmark, Clock, User, Tag,
+  Heart, MessageCircle, Share2, Bookmark, Clock, User, Tag, MoreVertical, Edit, Trash2,
   Lightbulb, ChefHat, Sparkles, ShoppingCart, MessageSquare, HelpCircle, Star, FileText
 } from 'lucide-react';
 import { Post } from '../../types';
@@ -13,11 +13,14 @@ import { ko } from 'date-fns/locale';
 interface PostCardProps {
   post: Post;
   onClick: () => void;
+  onEdit?: (post: Post) => void;
+  onDelete?: (postId: string) => void;
 }
 
-const PostCard: React.FC<PostCardProps> = ({ post, onClick }) => {
+const PostCard: React.FC<PostCardProps> = ({ post, onClick, onEdit, onDelete }) => {
   const { user } = useAuthStore();
-  const { updatePost } = useAppStore();
+  const { updatePost, deletePost } = useAppStore();
+  const [showMenu, setShowMenu] = useState(false);
 
   const getCategoryInfo = (category: string) => {
     const categories: Record<string, { name: string; icon: any; color: string }> = {
@@ -64,9 +67,25 @@ const PostCard: React.FC<PostCardProps> = ({ post, onClick }) => {
     });
   };
 
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (window.confirm('정말로 이 게시글을 삭제하시겠습니까?')) {
+      deletePost(post.id);
+      if (onDelete) onDelete(post.id);
+    }
+    setShowMenu(false);
+  };
+
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onEdit) onEdit(post);
+    setShowMenu(false);
+  };
+
   const categoryInfo = getCategoryInfo(post.category);
   const isLiked = post.likedBy?.includes(user?.id || '') || false;
   const isBookmarked = post.bookmarkedBy?.includes(user?.id || '') || false;
+  const isAuthor = user?.id === post.userId;
 
   return (
     <motion.div
@@ -100,9 +119,47 @@ const PostCard: React.FC<PostCardProps> = ({ post, onClick }) => {
             </div>
           </div>
         </div>
-        <div className={`flex items-center space-x-1 px-3 py-1 rounded-full text-xs font-medium ${categoryInfo.color}`}>
-          <categoryInfo.icon className="w-3 h-3" />
-          <span>{categoryInfo.name}</span>
+        <div className="flex items-center space-x-2">
+          <div className={`flex items-center space-x-1 px-3 py-1 rounded-full text-xs font-medium ${categoryInfo.color}`}>
+            <categoryInfo.icon className="w-3 h-3" />
+            <span>{categoryInfo.name}</span>
+          </div>
+          
+          {/* 작성자만 보이는 메뉴 */}
+          {isAuthor && (
+            <div className="relative">
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowMenu(!showMenu);
+                }}
+                className="p-1 rounded-full hover:bg-gray-100 transition-colors"
+              >
+                <MoreVertical className="w-4 h-4 text-gray-500" />
+              </motion.button>
+              
+              {showMenu && (
+                <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[120px]">
+                  <button
+                    onClick={handleEdit}
+                    className="flex items-center space-x-2 w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    <Edit className="w-4 h-4" />
+                    <span>편집</span>
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    className="flex items-center space-x-2 w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>삭제</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

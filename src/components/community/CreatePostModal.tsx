@@ -10,18 +10,21 @@ import { Post } from '../../types';
 import toast from 'react-hot-toast';
 
 interface CreatePostModalProps {
+  post?: Post | null;
   onClose: () => void;
 }
 
-const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose }) => {
-  const { addPost, mode, currentGroup } = useAppStore();
+const CreatePostModal: React.FC<CreatePostModalProps> = ({ post, onClose }) => {
+  const { addPost, updatePost, mode, currentGroup } = useAppStore();
   const { user } = useAuthStore();
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
-  const [category, setCategory] = useState('free');
-  const [tags, setTags] = useState<string[]>([]);
+  const [title, setTitle] = useState(post?.title || '');
+  const [content, setContent] = useState(post?.content || '');
+  const [category, setCategory] = useState(post?.category || 'free');
+  const [tags, setTags] = useState<string[]>(post?.tags || []);
   const [tagInput, setTagInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const isEditing = !!post;
 
   const categories = [
     { id: 'roommate', name: '메이트 구하기', icon: Users },
@@ -56,28 +59,39 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose }) => {
     setIsSubmitting(true);
 
     try {
-      const newPost: Post = {
-        id: Date.now().toString(),
-        title: title.trim(),
-        content: content.trim(),
-        category,
-        tags: tags.length > 0 ? tags : undefined,
-        userId: user.id,
-        author: user,
-        groupId: mode === 'group' ? currentGroup?.id : undefined,
-        likes: 0,
-        likedBy: [],
-        bookmarkedBy: [],
-        comments: [],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+      if (isEditing && post) {
+        // 편집 모드
+        updatePost(post.id, {
+          title: title.trim(),
+          content: content.trim(),
+          category,
+          tags: tags.length > 0 ? tags : undefined,
+          updatedAt: new Date(),
+        });
+        toast.success('게시글이 수정되었습니다!');
+      } else {
+        // 새 게시글 작성
+        const newPost: Omit<Post, 'id' | 'createdAt'> = {
+          title: title.trim(),
+          content: content.trim(),
+          category,
+          tags: tags.length > 0 ? tags : undefined,
+          userId: user.id,
+          author: user,
+          groupId: mode === 'group' ? currentGroup?.id : undefined,
+          likes: 0,
+          likedBy: [],
+          bookmarkedBy: [],
+          comments: [],
+          updatedAt: new Date(),
+        };
 
-      addPost(newPost);
-      toast.success('게시글이 성공적으로 작성되었습니다!');
+        addPost(newPost);
+        toast.success('게시글이 성공적으로 작성되었습니다!');
+      }
       onClose();
     } catch (error) {
-      toast.error('게시글 작성 중 오류가 발생했습니다.');
+      toast.error(isEditing ? '게시글 수정 중 오류가 발생했습니다.' : '게시글 작성 중 오류가 발생했습니다.');
     } finally {
       setIsSubmitting(false);
     }
@@ -94,7 +108,9 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose }) => {
         >
           {/* 헤더 */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-900">새 게시글 작성</h2>
+            <h2 className="text-xl font-bold text-gray-900">
+              {isEditing ? '게시글 수정' : '새 게시글 작성'}
+            </h2>
             <button
               onClick={onClose}
               className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
@@ -216,7 +232,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose }) => {
               </div>
 
               {/* 공개 범위 */}
-              {mode === 'group' && currentGroup && (
+              {mode === 'group' && currentGroup && !isEditing && (
                 <div className="bg-blue-50 rounded-xl p-4">
                   <div className="flex items-center space-x-2 text-blue-700">
                     <MapPin className="w-4 h-4" />
@@ -232,7 +248,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose }) => {
           {/* 푸터 */}
           <div className="flex items-center justify-between p-6 border-t border-gray-200 bg-gray-50">
             <div className="text-sm text-gray-500">
-              {mode === 'personal' ? '전체 공개' : '그룹 내 공개'}
+              {isEditing ? '게시글을 수정합니다' : (mode === 'personal' ? '전체 공개' : '그룹 내 공개')}
             </div>
             <div className="flex space-x-3">
               <button
@@ -251,12 +267,12 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose }) => {
                 {isSubmitting ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>작성 중...</span>
+                    <span>{isEditing ? '수정 중...' : '작성 중...'}</span>
                   </>
                 ) : (
                   <>
                     <Send className="w-4 h-4" />
-                    <span>게시하기</span>
+                    <span>{isEditing ? '수정하기' : '게시하기'}</span>
                   </>
                 )}
               </motion.button>

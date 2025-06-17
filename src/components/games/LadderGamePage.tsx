@@ -21,6 +21,8 @@ const LadderGamePage: React.FC = () => {
   const [ladderLines, setLadderLines] = useState<LadderLine[]>([]);
   const [animationPath, setAnimationPath] = useState<{x: number, y: number}[]>([]);
   const [showAnimation, setShowAnimation] = useState(false);
+  const [playedPlayers, setPlayedPlayers] = useState<number[]>([]);
+  const [gameFinished, setGameFinished] = useState(false);
 
   const generateLadder = (numPlayers: number) => {
     const lines: LadderLine[] = [];
@@ -108,7 +110,7 @@ const LadderGamePage: React.FC = () => {
   };
 
   const playGame = (playerIndex: number) => {
-    if (isPlaying) return;
+    if (isPlaying || playedPlayers.includes(playerIndex) || gameFinished) return;
     
     setIsPlaying(true);
     setSelectedPlayer(playerIndex);
@@ -122,12 +124,32 @@ const LadderGamePage: React.FC = () => {
     
     // 애니메이션 후 결과 표시
     setTimeout(() => {
-      setResult({
-        player: players[playerIndex],
-        penalty: isPass ? "통과" : penalty
-      });
-      setIsPlaying(false);
-      setShowAnimation(false);
+      if (isPass) {
+        // 통과한 경우: 플레이어를 사용됨 목록에 추가하고 게임 계속
+        setPlayedPlayers(prev => [...prev, playerIndex]);
+        setIsPlaying(false);
+        setShowAnimation(false);
+        setSelectedPlayer(null);
+        
+        // 잠시 결과를 보여준 후 계속 진행
+        setResult({
+          player: players[playerIndex],
+          penalty: "통과"
+        });
+        
+        setTimeout(() => {
+          setResult(null);
+        }, 1500);
+      } else {
+        // 벌칙에 당첨된 경우: 게임 종료
+        setResult({
+          player: players[playerIndex],
+          penalty: penalty
+        });
+        setGameFinished(true);
+        setIsPlaying(false);
+        setShowAnimation(false);
+      }
     }, path.length * 200 + 1000);
   };
 
@@ -136,6 +158,8 @@ const LadderGamePage: React.FC = () => {
     setResult(null);
     setAnimationPath([]);
     setShowAnimation(false);
+    setPlayedPlayers([]);
+    setGameFinished(false);
     setLadderLines(generateLadder(players.length));
   };
 
@@ -156,7 +180,7 @@ const LadderGamePage: React.FC = () => {
               <p className="text-gray-600">사다리를 타고 내려가서 운명을 결정하세요!</p>
             </div>
           </div>
-          {!showSetup && !result && (
+          {!showSetup && !gameFinished && (
             <button
               onClick={resetGame}
               className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -181,7 +205,7 @@ const LadderGamePage: React.FC = () => {
 
         {/* Game Result */}
         <AnimatePresence>
-          {result && (
+          {result && gameFinished && (
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -198,17 +222,15 @@ const LadderGamePage: React.FC = () => {
                   <Trophy className="w-10 h-10 text-yellow-600" />
                 </motion.div>
                 
-                <h2 className="text-3xl font-bold text-gray-800 mb-2">결과 발표!</h2>
+                <h2 className="text-3xl font-bold text-gray-800 mb-2">벌칙 당첨!</h2>
                 <p className="text-xl text-gray-600 mb-2">
-                  <span className="font-bold text-blue-600">{result.player}</span>님은
+                  <span className="font-bold text-red-600">{result.player}</span>님이
                 </p>
-                <p className={`text-2xl font-bold mb-6 ${
-                  result.penalty === "통과" ? "text-green-600" : "text-red-600"
-                }`}>
-                  {result.penalty === "통과" ? "통과!" : `"${result.penalty}"`}
+                <p className="text-2xl font-bold mb-6 text-red-600">
+                  "{result.penalty}"
                 </p>
                 <p className="text-gray-500 mb-6">
-                  {result.penalty === "통과" ? "축하합니다!" : "을 담당하게 되었습니다!"}
+                  을 담당하게 되었습니다!
                 </p>
                 
                 <div className="flex space-x-3">
@@ -233,16 +255,43 @@ const LadderGamePage: React.FC = () => {
           )}
         </AnimatePresence>
 
+        {/* Pass Result Notification */}
+        <AnimatePresence>
+          {result && !gameFinished && result.penalty === "통과" && (
+            <motion.div
+              initial={{ opacity: 0, y: -50 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -50 }}
+              className="fixed top-20 left-1/2 transform -translate-x-1/2 z-40"
+            >
+              <div className="bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2">
+                <span className="font-medium">{result.player}님 통과!</span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Game Board */}
-        {!showSetup && !result && (
+        {!showSetup && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="bg-white rounded-2xl p-8 shadow-lg"
           >
             <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">참여자를 선택하세요</h2>
-              <p className="text-gray-600">선택한 참여자의 경로를 따라 결과가 정해집니다</p>
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                {gameFinished ? "게임 종료!" : "참여자를 선택하세요"}
+              </h2>
+              <p className="text-gray-600">
+                {gameFinished 
+                  ? "벌칙 당첨자가 결정되었습니다!" 
+                  : "선택한 참여자의 경로를 따라 결과가 정해집니다"}
+              </p>
+              {playedPlayers.length > 0 && !gameFinished && (
+                <p className="text-sm text-blue-600 mt-2">
+                  통과한 플레이어: {playedPlayers.map(i => players[i]).join(', ')}
+                </p>
+              )}
             </div>
 
             {/* Player Selection */}
@@ -251,18 +300,20 @@ const LadderGamePage: React.FC = () => {
                 <motion.button
                   key={index}
                   onClick={() => playGame(index)}
-                  disabled={isPlaying}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  disabled={isPlaying || playedPlayers.includes(index) || gameFinished}
+                  whileHover={{ scale: playedPlayers.includes(index) || gameFinished ? 1 : 1.05 }}
+                  whileTap={{ scale: playedPlayers.includes(index) || gameFinished ? 1 : 0.95 }}
                   className={`px-6 py-3 rounded-lg font-medium transition-all ${
                     selectedPlayer === index
                       ? 'bg-blue-600 text-white'
-                      : isPlaying
+                      : playedPlayers.includes(index)
+                      ? 'bg-green-100 text-green-700 cursor-not-allowed'
+                      : isPlaying || gameFinished
                       ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                       : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
                   }`}
                 >
-                  {player}
+                  {playedPlayers.includes(index) ? `${player} (통과)` : player}
                 </motion.button>
               ))}
             </div>
@@ -382,7 +433,8 @@ const LadderGamePage: React.FC = () => {
                 <li>• 위에서 참여자를 선택하세요</li>
                 <li>• 빨간 공이 사다리를 따라 내려갑니다</li>
                 <li>• 연결된 가로줄을 만나면 반대편으로 이동합니다</li>
-                <li>• 최종 도착지의 번호에 해당하는 사람이 벌칙을 받습니다</li>
+                <li>• <span className="font-bold">통과한 플레이어는 다시 선택할 수 없습니다</span></li>
+                <li>• <span className="font-bold">벌칙에 당첨된 플레이어가 나올 때까지 계속됩니다</span></li>
               </ul>
             </div>
           </motion.div>

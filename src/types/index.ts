@@ -88,6 +88,7 @@ export interface Comment {
   author?: User;
   userId: string;
   createdAt: Date;
+  updatedAt?: Date;
 }
 
 export interface GameResult {

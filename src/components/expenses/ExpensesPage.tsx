@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
-import {motion} from 'framer-motion';
-import {Plus, PieChart, BarChart3, TrendingUp, Receipt, Calendar, Filter, Search} from 'lucide-react';
+import {motion, AnimatePresence} from 'framer-motion';
+import {Plus, PieChart, BarChart3, TrendingUp, Receipt, Calendar, Filter, Search, Bot, Sparkles, AlertTriangle, CheckCircle, TrendingDown} from 'lucide-react';
 import {
     PieChart as RechartsPieChart,
     Pie,
@@ -27,6 +27,8 @@ const ExpensesPage: React.FC = () => {
     const [currentMonth] = useState(new Date());
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState<string>('all');
+    const [showAnalysis, setShowAnalysis] = useState(false);
+    const [analysisLoading, setAnalysisLoading] = useState(false);
 
     const filteredExpenses = expenses.filter(expense => {
         const isModeMatch = mode === 'personal' ? !expense.groupId : expense.groupId;
@@ -183,6 +185,120 @@ const ExpensesPage: React.FC = () => {
 
     const personalShares = calculatePersonalShare();
 
+    // AI 분석 생성 함수
+    const generateAIAnalysis = () => {
+        setAnalysisLoading(true);
+        
+        // 실제로는 LLM API를 호출하지만, 여기서는 시뮬레이션
+        setTimeout(() => {
+            setAnalysisLoading(false);
+            setShowAnalysis(true);
+        }, 2000);
+    };
+
+    // AI 분석 데이터 생성
+    const getAIAnalysis = () => {
+        const totalBudget = 2000000; // 200만원 예산 가정
+        const spendingRate = (totalAmount / totalBudget) * 100;
+        const previousMonthAmount = totalAmount * 0.85; // 이전 달 대비 가정
+        const changeRate = ((totalAmount - previousMonthAmount) / previousMonthAmount) * 100;
+        
+        const insights = [];
+        const recommendations = [];
+        const warnings = [];
+
+        // 지출 분석
+        if (spendingRate > 90) {
+            warnings.push({
+                type: 'budget',
+                title: '예산 초과 위험',
+                message: `이번 달 예산의 ${spendingRate.toFixed(1)}%를 사용했습니다. 예산 관리가 필요해 보입니다.`,
+                severity: 'high'
+            });
+        } else if (spendingRate > 70) {
+            warnings.push({
+                type: 'budget',
+                title: '예산 사용량 주의',
+                message: `현재 예산의 ${spendingRate.toFixed(1)}%를 사용했습니다. 남은 기간 지출에 주의하세요.`,
+                severity: 'medium'
+            });
+        }
+
+        // 카테고리별 분석
+        analytics.categoryBreakdown.forEach(cat => {
+            if (cat.percentage > 40) {
+                insights.push({
+                    type: 'category',
+                    title: `${cat.label} 지출 집중`,
+                    message: `전체 지출의 ${cat.percentage.toFixed(1)}%가 ${cat.label}에 집중되어 있습니다.`,
+                    icon: AlertTriangle,
+                    color: 'text-orange-600'
+                });
+            }
+        });
+
+        // 변화율 분석
+        if (changeRate > 20) {
+            insights.push({
+                type: 'trend',
+                title: '지출 증가 추세',
+                message: `이전 달 대비 ${changeRate.toFixed(1)}% 지출이 증가했습니다.`,
+                icon: TrendingUp,
+                color: 'text-red-600'
+            });
+        } else if (changeRate < -10) {
+            insights.push({
+                type: 'trend',
+                title: '지출 절약 성공',
+                message: `이전 달 대비 ${Math.abs(changeRate).toFixed(1)}% 지출을 절약했습니다.`,
+                icon: TrendingDown,
+                color: 'text-green-600'
+            });
+        }
+
+        // 추천사항 생성
+        if (analytics.categoryBreakdown[0]?.category === 'food' && analytics.categoryBreakdown[0]?.percentage > 35) {
+            recommendations.push({
+                title: '식비 절약 팁',
+                message: '집에서 요리하는 횟수를 늘리고, 배달음식 대신 직접 조리해보세요.',
+                impact: '월 15-20만원 절약 가능',
+                difficulty: '쉬움'
+            });
+        }
+
+        if (analytics.categoryBreakdown.find(cat => cat.category === 'entertainment')?.percentage > 25) {
+            recommendations.push({
+                title: '유흥비 관리',
+                message: '월 유흥비 한도를 설정하고, 무료 문화활동을 활용해보세요.',
+                impact: '월 10-15만원 절약 가능',
+                difficulty: '보통'
+            });
+        }
+
+        recommendations.push({
+            title: '자동 저축 설정',
+            message: '매월 고정 금액을 자동으로 저축하는 습관을 만들어보세요.',
+            impact: '연간 목표 달성률 40% 향상',
+            difficulty: '쉬움'
+        });
+
+        return {
+            insights,
+            recommendations,
+            warnings,
+            summary: {
+                totalAmount,
+                spendingRate,
+                changeRate,
+                topCategory: analytics.categoryBreakdown[0]?.label || '없음',
+                avgDaily: totalAmount / new Date().getDate(),
+                prediction: totalAmount * (new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate() / new Date().getDate())
+            }
+        };
+    };
+
+    const aiAnalysis = getAIAnalysis();
+
     return (
         <div className="space-y-8">
             {/* Header */}
@@ -222,6 +338,22 @@ const ExpensesPage: React.FC = () => {
                             ))}
                         </select>
                     </div>
+
+                    {/* AI Analysis Button */}
+                    <motion.button
+                        className="flex items-center space-x-2 px-4 py-2 bg-primary-500 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors"
+                        whileHover={{scale: 1.05}}
+                        whileTap={{scale: 0.95}}
+                        onClick={generateAIAnalysis}
+                        disabled={analysisLoading}
+                    >
+                        {analysisLoading ? (
+                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                            <Bot className="w-5 h-5"/>
+                        )}
+                        <span>{analysisLoading ? '분석 중...' : 'AI 분석'}</span>
+                    </motion.button>
 
                     {/* Add Expense Button */}
                     <motion.button
@@ -593,6 +725,240 @@ const ExpensesPage: React.FC = () => {
                     )}
                 </div>
             </motion.div>
+
+            {/* AI Analysis Modal */}
+            <AnimatePresence>
+                {showAnalysis && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden"
+                        >
+                            {/* Modal Header */}
+                            <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center space-x-3">
+                                        <div className="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                                            <Sparkles className="w-6 h-6" />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-xl font-bold">AI 가계부 분석</h2>
+                                            <p className="text-purple-100">
+                                                {format(currentMonth, 'yyyy년 M월', {locale: ko})} 지출 패턴 분석 결과
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => setShowAnalysis(false)}
+                                        className="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center hover:bg-opacity-30 transition-colors"
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Modal Content */}
+                            <div className="p-6 overflow-y-auto max-h-[calc(90vh-100px)]">
+                                {/* Summary Cards */}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <span className="text-blue-600 font-medium">예산 사용률</span>
+                                            <TrendingUp className="w-5 h-5 text-blue-600" />
+                                        </div>
+                                        <div className="text-2xl font-bold text-blue-800">
+                                            {aiAnalysis.summary.spendingRate.toFixed(1)}%
+                                        </div>
+                                        <div className="text-sm text-blue-600">
+                                            {formatCurrency(aiAnalysis.summary.totalAmount)} / {formatCurrency(2000000)}
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <span className="text-green-600 font-medium">일평균 지출</span>
+                                            <Calendar className="w-5 h-5 text-green-600" />
+                                        </div>
+                                        <div className="text-2xl font-bold text-green-800">
+                                            {formatCurrency(aiAnalysis.summary.avgDaily)}
+                                        </div>
+                                        <div className="text-sm text-green-600">
+                                            현재까지 평균
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <span className="text-purple-600 font-medium">월말 예상</span>
+                                            <BarChart3 className="w-5 h-5 text-purple-600" />
+                                        </div>
+                                        <div className="text-2xl font-bold text-purple-800">
+                                            {formatCurrency(aiAnalysis.summary.prediction)}
+                                        </div>
+                                        <div className="text-sm text-purple-600">
+                                            현재 패턴 기준
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Warnings */}
+                                {aiAnalysis.warnings.length > 0 && (
+                                    <div className="mb-6">
+                                        <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                                            <AlertTriangle className="w-5 h-5 text-orange-500 mr-2" />
+                                            주의사항
+                                        </h3>
+                                        <div className="space-y-3">
+                                            {aiAnalysis.warnings.map((warning, index) => (
+                                                <div
+                                                    key={index}
+                                                    className={`p-4 rounded-xl border-l-4 ${
+                                                        warning.severity === 'high' 
+                                                            ? 'bg-red-50 border-red-500' 
+                                                            : 'bg-orange-50 border-orange-500'
+                                                    }`}
+                                                >
+                                                    <h4 className={`font-semibold ${
+                                                        warning.severity === 'high' ? 'text-red-800' : 'text-orange-800'
+                                                    }`}>
+                                                        {warning.title}
+                                                    </h4>
+                                                    <p className={`text-sm mt-1 ${
+                                                        warning.severity === 'high' ? 'text-red-600' : 'text-orange-600'
+                                                    }`}>
+                                                        {warning.message}
+                                                    </p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Insights */}
+                                <div className="mb-6">
+                                    <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                                        <Bot className="w-5 h-5 text-blue-500 mr-2" />
+                                        분석 결과
+                                    </h3>
+                                    <div className="space-y-3">
+                                        {aiAnalysis.insights.map((insight, index) => (
+                                            <div key={index} className="flex items-start space-x-3 p-4 bg-gray-50 rounded-xl">
+                                                <insight.icon className={`w-5 h-5 mt-0.5 ${insight.color}`} />
+                                                <div>
+                                                    <h4 className="font-medium text-gray-900">{insight.title}</h4>
+                                                    <p className="text-sm text-gray-600 mt-1">{insight.message}</p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Recommendations */}
+                                <div className="mb-6">
+                                    <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                                        <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
+                                        개선 제안
+                                    </h3>
+                                    <div className="space-y-4">
+                                        {aiAnalysis.recommendations.map((rec, index) => (
+                                            <div key={index} className="p-4 bg-green-50 rounded-xl border border-green-200">
+                                                <div className="flex items-start justify-between">
+                                                    <div className="flex-1">
+                                                        <h4 className="font-semibold text-green-800 mb-2">{rec.title}</h4>
+                                                        <p className="text-sm text-green-700 mb-3">{rec.message}</p>
+                                                        <div className="flex items-center space-x-4 text-xs">
+                                                            <div className="flex items-center space-x-1">
+                                                                <span className="text-green-600 font-medium">예상 효과:</span>
+                                                                <span className="text-green-800">{rec.impact}</span>
+                                                            </div>
+                                                            <div className="flex items-center space-x-1">
+                                                                <span className="text-green-600 font-medium">난이도:</span>
+                                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                                                    rec.difficulty === '쉬움' ? 'bg-green-100 text-green-700' :
+                                                                    rec.difficulty === '보통' ? 'bg-yellow-100 text-yellow-700' :
+                                                                    'bg-red-100 text-red-700'
+                                                                }`}>
+                                                                    {rec.difficulty}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Category Analysis */}
+                                <div>
+                                    <h3 className="text-lg font-semibold text-gray-900 mb-3">카테고리별 상세 분석</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {analytics.categoryBreakdown.slice(0, 4).map((cat) => (
+                                            <div key={cat.category} className="p-4 border border-gray-200 rounded-xl">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <div className="flex items-center space-x-2">
+                                                        <div 
+                                                            className="w-4 h-4 rounded-full" 
+                                                            style={{ backgroundColor: cat.color }}
+                                                        />
+                                                        <span className="font-medium text-gray-900">{cat.label}</span>
+                                                    </div>
+                                                    <span className="text-sm font-medium text-gray-600">
+                                                        {cat.percentage.toFixed(1)}%
+                                                    </span>
+                                                </div>
+                                                <div className="text-lg font-bold text-gray-900 mb-1">
+                                                    {formatCurrency(cat.amount)}
+                                                </div>
+                                                <div className="text-sm text-gray-500">
+                                                    {cat.count}건의 지출
+                                                </div>
+                                                <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                                                    <div 
+                                                        className="h-2 rounded-full transition-all duration-500"
+                                                        style={{ 
+                                                            backgroundColor: cat.color,
+                                                            width: `${cat.percentage}%`
+                                                        }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Modal Footer */}
+                            <div className="bg-gray-50 p-6 border-t border-gray-200">
+                                <div className="flex items-center justify-between">
+                                    <div className="text-xs text-gray-500">
+                                        * 이 분석은 AI가 생성한 것으로 참고용입니다.
+                                    </div>
+                                    <div className="flex space-x-3">
+                                        <button
+                                            onClick={() => setShowAnalysis(false)}
+                                            className="px-6 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                                        >
+                                            닫기
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                // 분석 결과를 PDF로 저장하거나 다른 액션
+                                                alert('분석 결과를 저장했습니다!');
+                                            }}
+                                            className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                                        >
+                                            결과 저장
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
 
             {/* Expense Modal */}
             {showExpenseModal && (
