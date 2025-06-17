@@ -153,7 +153,7 @@ const Header: React.FC = () => {
           <motion.div
             className="flex items-center cursor-pointer"
             whileHover={{ scale: 1.05 }}
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/dashboard')}
           >
             <img src="/image/Logo.png" alt="우리.zip" className="w-12 h-12 sm:w-16 sm:h-16" />
           </motion.div>

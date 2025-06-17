@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   ArrowLeft, Heart, MessageCircle, Send, Clock, Share2, Flag,
@@ -17,9 +17,10 @@ interface PostDetailProps {
   onBack: () => void;
 }
 
-const PostDetail: React.FC<PostDetailProps> = ({ post, onBack }) => {
+const PostDetail: React.FC<PostDetailProps> = ({ post: initialPost, onBack }) => {
   const { user } = useAuthStore();
-  const { updatePost } = useAppStore();
+  const { updatePost, posts } = useAppStore();
+  const [post, setPost] = useState<Post>(initialPost);
   const [newComment, setNewComment] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [reportModal, setReportModal] = useState<{
@@ -33,6 +34,14 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack }) => {
     targetId: '',
     targetTitle: ''
   });
+
+  // posts 상태가 변경될 때마다 현재 post를 업데이트
+  useEffect(() => {
+    const updatedPost = posts.find(p => p.id === post.id);
+    if (updatedPost) {
+      setPost(updatedPost);
+    }
+  }, [posts, post.id]);
 
   const getCategoryInfo = (category: string) => {
     const categories: Record<string, { name: string; icon: any; color: string }> = {
@@ -61,6 +70,7 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack }) => {
 
       const updatedComments = [...(post.comments || []), comment];
       updatePost(post.id, { comments: updatedComments });
+      
       setNewComment('');
       toast.success('댓글이 작성되었습니다.');
     } catch (error) {

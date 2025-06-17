@@ -12,7 +12,7 @@ interface AuthState {
 
 // Sample user for testing
 const sampleUser: User = {
-  id: 'user1',
+  id: 'google_user_123',
   name: '김우리',
   email: 'woori@gmail.com',
   provider: 'google'

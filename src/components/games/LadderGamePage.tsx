@@ -31,24 +31,31 @@ const LadderGamePage: React.FC = () => {
       
       // 각 레벨에서 랜덤하게 연결선 생성
       const connections = new Set<number>();
-      const numConnections = Math.floor(Math.random() * (numPlayers - 1)) + 1;
+      const maxConnections = Math.floor((numPlayers - 1) / 2); // 최대 연결 수 제한
+      const numConnections = Math.floor(Math.random() * maxConnections) + 1;
       
-      for (let i = 0; i < numConnections; i++) {
+      let attempts = 0;
+      for (let i = 0; i < numConnections && attempts < numPlayers * 2; i++) {
         let from = Math.floor(Math.random() * (numPlayers - 1));
+        attempts++;
         
         // 이미 연결된 라인과 겹치지 않도록 체크
-        while (connections.has(from) || connections.has(from + 1)) {
+        while ((connections.has(from) || connections.has(from + 1)) && attempts < numPlayers * 2) {
           from = Math.floor(Math.random() * (numPlayers - 1));
+          attempts++;
         }
         
-        connections.add(from);
-        connections.add(from + 1);
-        
-        lines.push({
-          from,
-          to: from + 1,
-          y
-        });
+        // 유효한 연결을 찾았다면 추가
+        if (!connections.has(from) && !connections.has(from + 1)) {
+          connections.add(from);
+          connections.add(from + 1);
+          
+          lines.push({
+            from,
+            to: from + 1,
+            y
+          });
+        }
       }
     }
     
@@ -58,16 +65,17 @@ const LadderGamePage: React.FC = () => {
   const calculatePath = (startIndex: number, lines: LadderLine[], numPlayers: number) => {
     const path: {x: number, y: number}[] = [];
     let currentIndex = startIndex;
-    const stepSize = 100 / Math.max(8, numPlayers * 2);
+    const numLevels = Math.max(8, numPlayers * 2);
+    const stepSize = 100 / numLevels;
     
     path.push({ x: (currentIndex / (numPlayers - 1)) * 100, y: 0 });
     
-    for (let level = 1; level < Math.max(8, numPlayers * 2); level++) {
+    for (let level = 1; level < numLevels; level++) {
       const y = level * stepSize;
       
-      // 현재 레벨에서 연결선 확인
+      // 현재 레벨에서 연결선 확인 (더 정확한 범위로 체크)
       const connectionAtLevel = lines.find(line => 
-        Math.abs(line.y - y) < stepSize / 2 && 
+        Math.abs(line.y - y) < stepSize * 0.6 && 
         (line.from === currentIndex || line.to === currentIndex)
       );
       
@@ -77,6 +85,7 @@ const LadderGamePage: React.FC = () => {
           ? connectionAtLevel.to 
           : connectionAtLevel.from;
         
+        // 가로로 이동하는 패스 추가
         path.push({ x: (currentIndex / (numPlayers - 1)) * 100, y });
         path.push({ x: (newIndex / (numPlayers - 1)) * 100, y });
         currentIndex = newIndex;
@@ -86,6 +95,7 @@ const LadderGamePage: React.FC = () => {
       }
     }
     
+    // 최종 위치
     path.push({ x: (currentIndex / (numPlayers - 1)) * 100, y: 100 });
     return { path, finalIndex: currentIndex };
   };

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Plus, Grid, List, Calendar as CalendarIcon, BarChart3 } from 'lucide-react';
 import { 
@@ -18,56 +18,92 @@ const CalendarPage: React.FC = () => {
   const [showEventModal, setShowEventModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
 
+  // currentDate가 유효한지 확인하고 필요시 수정
+  useEffect(() => {
+    if (!currentDate || !(currentDate instanceof Date) || isNaN(currentDate.getTime())) {
+      console.warn('Invalid currentDate detected, resetting to current date');
+      setCurrentDate(new Date());
+    }
+  }, [currentDate, setCurrentDate]);
+
   // 뷰에 따른 네비게이션 함수들
   const handlePrevious = () => {
-    switch (currentView) {
-      case 'year':
-        setCurrentDate(subYears(currentDate, 1));
-        break;
-      case 'month':
-        setCurrentDate(subMonths(currentDate, 1));
-        break;
-      case 'week':
-        setCurrentDate(subWeeks(currentDate, 1));
-        break;
-      case 'day':
-        setCurrentDate(subDays(currentDate, 1));
-        break;
+    const safeDate = currentDate instanceof Date && !isNaN(currentDate.getTime()) 
+      ? currentDate 
+      : new Date();
+
+    try {
+      switch (currentView) {
+        case 'year':
+          setCurrentDate(subYears(safeDate, 1));
+          break;
+        case 'month':
+          setCurrentDate(subMonths(safeDate, 1));
+          break;
+        case 'week':
+          setCurrentDate(subWeeks(safeDate, 1));
+          break;
+        case 'day':
+          setCurrentDate(subDays(safeDate, 1));
+          break;
+      }
+    } catch (error) {
+      console.error('Navigation error:', error);
+      setCurrentDate(new Date());
     }
   };
 
   const handleNext = () => {
-    switch (currentView) {
-      case 'year':
-        setCurrentDate(addYears(currentDate, 1));
-        break;
-      case 'month':
-        setCurrentDate(addMonths(currentDate, 1));
-        break;
-      case 'week':
-        setCurrentDate(addWeeks(currentDate, 1));
-        break;
-      case 'day':
-        setCurrentDate(addDays(currentDate, 1));
-        break;
+    const safeDate = currentDate instanceof Date && !isNaN(currentDate.getTime()) 
+      ? currentDate 
+      : new Date();
+
+    try {
+      switch (currentView) {
+        case 'year':
+          setCurrentDate(addYears(safeDate, 1));
+          break;
+        case 'month':
+          setCurrentDate(addMonths(safeDate, 1));
+          break;
+        case 'week':
+          setCurrentDate(addWeeks(safeDate, 1));
+          break;
+        case 'day':
+          setCurrentDate(addDays(safeDate, 1));
+          break;
+      }
+    } catch (error) {
+      console.error('Navigation error:', error);
+      setCurrentDate(new Date());
     }
   };
 
   // 뷰에 따른 제목 표시
   const getViewTitle = () => {
-    switch (currentView) {
-      case 'year':
-        return format(currentDate, 'yyyy년', { locale: ko });
-      case 'month':
-        return format(currentDate, 'yyyy년 M월', { locale: ko });
-      case 'week':
-        const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
-        const weekEnd = endOfWeek(currentDate, { weekStartsOn: 0 });
-        return `${format(weekStart, 'M월 d일', { locale: ko })} - ${format(weekEnd, 'M월 d일', { locale: ko })}`;
-      case 'day':
-        return format(currentDate, 'yyyy년 M월 d일 (E)', { locale: ko });
-      default:
-        return format(currentDate, 'yyyy년 M월', { locale: ko });
+    // currentDate가 유효한지 확인
+    const safeDate = currentDate instanceof Date && !isNaN(currentDate.getTime()) 
+      ? currentDate 
+      : new Date();
+
+    try {
+      switch (currentView) {
+        case 'year':
+          return format(safeDate, 'yyyy년', { locale: ko });
+        case 'month':
+          return format(safeDate, 'yyyy년 M월', { locale: ko });
+        case 'week':
+          const weekStart = startOfWeek(safeDate, { weekStartsOn: 0 });
+          const weekEnd = endOfWeek(safeDate, { weekStartsOn: 0 });
+          return `${format(weekStart, 'M월 d일', { locale: ko })} - ${format(weekEnd, 'M월 d일', { locale: ko })}`;
+        case 'day':
+          return format(safeDate, 'yyyy년 M월 d일 (E)', { locale: ko });
+        default:
+          return format(safeDate, 'yyyy년 M월', { locale: ko });
+      }
+    } catch (error) {
+      console.error('Date formatting error:', error);
+      return '날짜 오류';
     }
   };
 
@@ -246,8 +282,13 @@ const YearView: React.FC<{
   mode: string;
   onDateClick: (date: Date) => void;
 }> = ({ currentDate, events, mode, onDateClick }) => {
-  const yearStart = startOfYear(currentDate);
-  const yearEnd = endOfYear(currentDate);
+  // 안전한 날짜 확인
+  const safeDate = currentDate instanceof Date && !isNaN(currentDate.getTime()) 
+    ? currentDate 
+    : new Date();
+
+  const yearStart = startOfYear(safeDate);
+  const yearEnd = endOfYear(safeDate);
   const months = eachMonthOfInterval({ start: yearStart, end: yearEnd });
 
   const getMonthEventCount = (month: Date) => {
@@ -302,8 +343,13 @@ const MonthView: React.FC<{
   onEventClick: (event: any, e: React.MouseEvent) => void;
   getEventsForDate: (date: Date) => any[];
 }> = ({ currentDate, onDateClick, onEventClick, getEventsForDate }) => {
-  const monthStart = startOfMonth(currentDate);
-  const monthEnd = endOfMonth(currentDate);
+  // 안전한 날짜 확인
+  const safeDate = currentDate instanceof Date && !isNaN(currentDate.getTime()) 
+    ? currentDate 
+    : new Date();
+
+  const monthStart = startOfMonth(safeDate);
+  const monthEnd = endOfMonth(safeDate);
 
   // 달력에서 표시할 첫 번째 날과 마지막 날 (주 단위로 표시)
   const calendarStart = startOfWeek(monthStart, { weekStartsOn: 0 });
@@ -328,7 +374,7 @@ const MonthView: React.FC<{
         {calendarDays.map((day, index) => {
           const dayEvents = getEventsForDate(day);
           const isToday = isSameDay(day, new Date());
-          const isCurrentMonth = isSameMonth(day, currentDate);
+          const isCurrentMonth = isSameMonth(day, safeDate);
 
           return (
             <motion.div
@@ -406,7 +452,12 @@ const WeekView: React.FC<{
   onEventClick: (event: any, e: React.MouseEvent) => void;
   getEventsForDate: (date: Date) => any[];
 }> = ({ currentDate, onDateClick, onEventClick, getEventsForDate }) => {
-  const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
+  // 안전한 날짜 확인
+  const safeDate = currentDate instanceof Date && !isNaN(currentDate.getTime()) 
+    ? currentDate 
+    : new Date();
+
+  const weekStart = startOfWeek(safeDate, { weekStartsOn: 0 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
   return (
@@ -485,8 +536,13 @@ const DayView: React.FC<{
   onEventClick: (event: any, e: React.MouseEvent) => void;
   getEventsForDate: (date: Date) => any[];
 }> = ({ currentDate, onDateClick, onEventClick, getEventsForDate }) => {
-  const dayEvents = getEventsForDate(currentDate);
-  const isToday = isSameDay(currentDate, new Date());
+  // 안전한 날짜 확인
+  const safeDate = currentDate instanceof Date && !isNaN(currentDate.getTime()) 
+    ? currentDate 
+    : new Date();
+
+  const dayEvents = getEventsForDate(safeDate);
+  const isToday = isSameDay(safeDate, new Date());
 
   return (
     <div className="p-6">
@@ -494,10 +550,10 @@ const DayView: React.FC<{
         isToday ? 'bg-primary-50 border border-primary-200' : 'bg-gray-50'
       }`}>
         <h3 className={`text-2xl font-bold ${isToday ? 'text-primary-600' : 'text-gray-800'}`}>
-          {format(currentDate, 'd')}
+          {format(safeDate, 'd')}
         </h3>
         <p className="text-gray-600">
-          {format(currentDate, 'yyyy년 M월 d일 E요일', { locale: ko })}
+          {format(safeDate, 'yyyy년 M월 d일 E요일', { locale: ko })}
         </p>
       </div>
 
@@ -545,7 +601,7 @@ const DayView: React.FC<{
             <motion.button
               className="mt-4 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
               whileHover={{ scale: 1.05 }}
-              onClick={() => onDateClick(currentDate)}
+              onClick={() => onDateClick(safeDate)}
             >
               일정 추가
             </motion.button>

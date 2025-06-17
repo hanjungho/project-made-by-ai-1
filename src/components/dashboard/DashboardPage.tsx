@@ -687,36 +687,38 @@ const DashboardPage: React.FC = () => {
         </motion.div>
       </div>
 
-      {/* Features Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {features.map((feature, index) => (
-          <motion.div
-            key={feature.title}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: index * 0.1 }}
-            className="bg-white rounded-2xl p-8 shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-300 cursor-pointer group"
-            whileHover={{ scale: 1.02, y: -4 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => navigate(feature.path)}
-          >
-            <div className="flex items-center justify-between mb-6">
-              <div className={`w-14 h-14 bg-gradient-to-r ${feature.color} rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
-                <feature.icon className="w-7 h-7 text-white" />
-              </div>
-              {feature.count > 0 && (
-                <div className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-medium">
-                  {feature.count}
+      {/* Features Grid - 개인모드에서는 숨김 */}
+      {mode === 'group' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {features.map((feature, index) => (
+            <motion.div
+              key={feature.title}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: index * 0.1 }}
+              className="bg-white rounded-2xl p-8 shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-300 cursor-pointer group"
+              whileHover={{ scale: 1.02, y: -4 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => navigate(feature.path)}
+            >
+              <div className="flex items-center justify-between mb-6">
+                <div className={`w-14 h-14 bg-gradient-to-r ${feature.color} rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
+                  <feature.icon className="w-7 h-7 text-white" />
                 </div>
-              )}
-            </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-primary-600 transition-colors">
-              {feature.title}
-            </h3>
-            <p className="text-gray-600 leading-relaxed">{feature.description}</p>
-          </motion.div>
-        ))}
-      </div>
+                {feature.count > 0 && (
+                  <div className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-medium">
+                    {feature.count}
+                  </div>
+                )}
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-primary-600 transition-colors">
+                {feature.title}
+              </h3>
+              <p className="text-gray-600 leading-relaxed">{feature.description}</p>
+            </motion.div>
+          ))}
+        </div>
+      )}
 
       {/* Group Management CTA */}
       {mode === 'group' && !currentGroup && (
